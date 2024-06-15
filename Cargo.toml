@@ -1,0 +1,16 @@
+[package]
+name = "llvm-lib"
+version = "0.0.0-reserved"
+authors = "Evgeny Ukhanov <evgeny@ukhanov.org.ua>"
+description = "LLVM library with safe and flexibility in mind, without over complexity based on LLVM-C API"
+categories = ["compilers", "development-tools", "development-tools::build-utils"]
+license = "MIT"
+edition = "2021"
+homepage = "https://github.com/mrLSD/llvm-lib-rs"
+repository = "https://github.com/mrLSD/llvm-lib-rs"
+
+[lib]
+doctest = false
+
+[dependencies]
+llvm-sys = "181.0"
