@@ -6,6 +6,13 @@
 
 LLVM library with safe and flexibility in mind, without over complexity based on `LLVM-C` API.
 
+Intended for use in writing backends for compilers using LLVM, in a secure and sqfe manner but 
+maintaining flexibility.
+
 ## Status
 
-Suspend and reserved for developmend.
+Currently implemented most basic functionality.
+
+Development in progress.
+
+### LICENSE: [MIT](LICENSE)
