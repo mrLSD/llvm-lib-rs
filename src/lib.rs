@@ -68,3 +68,14 @@ impl Deref for CString {
         &self.0
     }
 }
+
+/// Wrapping for `*mut c_void`
+#[derive(Copy, Clone)]
+pub struct UnsafeMutVoidPtr(*mut std::ffi::c_void);
+
+impl Deref for UnsafeMutVoidPtr {
+    type Target = *mut std::ffi::c_void;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}

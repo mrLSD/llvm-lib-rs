@@ -41,12 +41,14 @@ impl ContextRef {
     /// - `handler` - LLVM diagnostic function (handler)
     /// - `diagnostic_context` - raw pointer for diagnostic
     /// NOTE: it's much safer to use raw pointer in that case than `std::ptr::NonNull` structs.
-    pub unsafe fn context_set_diagnostic_handler(
+    pub fn context_set_diagnostic_handler(
         &self,
         handler: LLVMDiagnosticHandler,
-        diagnostic_context: *mut ffi::c_void,
+        diagnostic_context: crate::UnsafeMutVoidPtr,
     ) {
-        LLVMContextSetDiagnosticHandler(self.0, handler, diagnostic_context);
+        unsafe {
+            LLVMContextSetDiagnosticHandler(self.0, handler, *diagnostic_context);
+        }
     }
 
     #[must_use]

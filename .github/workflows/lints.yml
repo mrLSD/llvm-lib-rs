@@ -1,0 +1,49 @@
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+
+name: Lints
+jobs:
+  lint:
+    name: Lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+        rust:
+          - stable
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Pre-install
+        run: |
+          brew update
+          brew install llvm@18
+          echo "" >> /Users/runner/.bash_profile
+          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> /Users/runner/.bash_profile
+          echo 'export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"' >> /Users/runner/.bash_profile
+          echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"' >> /Users/runner/.bash_profile
+          source /Users/runner/.bash_profile
+          clang --version
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy no-default-features
+        run: |
+          source /Users/runner/.bash_profile
+          cargo clippy --all --all-targets --no-default-features -- -D warnings
+      - name: Clippy no-default-features
+        run: cargo clippy --all-targets --no-default-features -- -D warnings
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
