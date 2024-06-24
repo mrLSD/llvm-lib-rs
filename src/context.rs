@@ -66,7 +66,7 @@ impl Drop for ContextRef {
         unsafe {
             LLVMContextDispose(self.0);
         }
-    }
+    }≠
 }
 
 impl Deref for ContextRef {
