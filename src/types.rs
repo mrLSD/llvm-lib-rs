@@ -1,4 +1,4 @@
-use super::context::ContextRef;
+use super::context::{ContextRef, GetRef};
 use std::ops::Deref;
 
 use crate::CUint;
@@ -7,18 +7,41 @@ use llvm_sys::core::{
     LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
     LLVMInt8TypeInContext, LLVMPointerType, LLVMVoidTypeInContext,
 };
-use llvm_sys::prelude::LLVMTypeRef;
+use llvm_sys::prelude::{LLVMAttributeRef, LLVMTypeRef};
+
+/// LLVM Attributes structure wrapper
+pub struct AttributeRef(LLVMAttributeRef);
+
+impl From<LLVMAttributeRef> for AttributeRef {
+    fn from(value: LLVMAttributeRef) -> Self {
+        Self(value)
+    }
+}
+
+impl GetRef for AttributeRef {
+    type RawRef = LLVMAttributeRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
 
 /// LLVM Type structure wrapper
 pub struct TypeRef(LLVMTypeRef);
 
-impl TypeRef {
-    // Get raw type reference
-    #[must_use]
-    pub const fn get(&self) -> LLVMTypeRef {
+impl From<LLVMTypeRef> for TypeRef {
+    fn from(value: LLVMTypeRef) -> Self {
+        Self(value)
+    }
+}
+
+impl GetRef for TypeRef {
+    type RawRef = LLVMTypeRef;
+    fn get_ref(&self) -> Self::RawRef {
         self.0
     }
+}
 
+impl TypeRef {
     /// Create Void type in context
     #[must_use]
     pub fn void_type(context: &ContextRef) -> Self {

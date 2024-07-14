@@ -8,7 +8,7 @@ pub mod module;
 pub mod types;
 pub mod value;
 
-use libc::{c_uint, size_t};
+use libc::{c_char, c_int, c_uint, size_t};
 use std::ops::Deref;
 
 /// `c_uint` wrapper (from C-type)
@@ -16,7 +16,7 @@ pub struct CUint(c_uint);
 
 impl From<u32> for CUint {
     fn from(value: u32) -> Self {
-        // Force to unwrap c_uint to u32 with expect fail message
+        // Force to unwrap c_uint
         Self(c_uint::try_from(value).expect("c_unit casting fail from u32"))
     }
 }
@@ -24,12 +24,35 @@ impl From<u32> for CUint {
 impl From<usize> for CUint {
     fn from(value: usize) -> Self {
         // Force to unwrap c_uint
-        Self(c_uint::try_from(value).expect("c_unit casting fail from usize"))
+        Self(c_uint::try_from(value).expect("c_uint casting fail from usize"))
     }
 }
 
 impl Deref for CUint {
     type Target = c_uint;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// `c_int` wrapper (from C-type)
+pub struct CInt(c_int);
+
+impl From<i32> for CInt {
+    fn from(value: i32) -> Self {
+        // Force to unwrap c_int
+        Self(c_int::try_from(value).expect("c_int casting fail from i32"))
+    }
+}
+
+impl From<bool> for CInt {
+    fn from(value: bool) -> Self {
+        Self(c_int::from(value))
+    }
+}
+
+impl Deref for CInt {
+    type Target = c_int;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -66,6 +89,29 @@ impl Deref for CString {
     type Target = std::ffi::CString;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+/// `CStr` wrapper
+pub struct CStr<'a>(&'a std::ffi::CStr);
+
+impl<'a> CStr<'a> {
+    /// Initialize wrapped `CStr`
+    /// ## Safety
+    /// NOTE: Safety considerations same as for `std::ffi::CStr::from_ptr`.
+    #[must_use]
+    pub unsafe fn new(value: *const c_char) -> Self {
+        unsafe { Self(std::ffi::CStr::from_ptr(value)) }
+    }
+}
+
+#[allow(clippy::to_string_trait_impl)]
+impl<'a> ToString for CStr<'a> {
+    fn to_string(&self) -> String {
+        self.0
+            .to_str()
+            .map(ToString::to_string)
+            .expect("Failed to convert CStr to String")
     }
 }
 
