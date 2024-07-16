@@ -7,21 +7,26 @@ use llvm_sys::core::{
     LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
     LLVMInt8TypeInContext, LLVMPointerType, LLVMVoidTypeInContext,
 };
-use llvm_sys::prelude::{LLVMAttributeRef, LLVMTypeRef};
+use llvm_sys::prelude::LLVMTypeRef;
+use llvm_sys::LLVMDiagnosticSeverity;
 
-/// LLVM Attributes structure wrapper
-pub struct AttributeRef(LLVMAttributeRef);
-
-impl From<LLVMAttributeRef> for AttributeRef {
-    fn from(value: LLVMAttributeRef) -> Self {
-        Self(value)
-    }
+/// Wrapper for `LLVMDiagnosticSeverity`
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DiagnosticSeverity {
+    DSError,
+    DSWarning,
+    DSRemark,
+    DSNote,
 }
 
-impl GetRef for AttributeRef {
-    type RawRef = LLVMAttributeRef;
-    fn get_ref(&self) -> Self::RawRef {
-        self.0
+impl From<LLVMDiagnosticSeverity> for DiagnosticSeverity {
+    fn from(severity: LLVMDiagnosticSeverity) -> Self {
+        match severity {
+            LLVMDiagnosticSeverity::LLVMDSError => Self::DSError,
+            LLVMDiagnosticSeverity::LLVMDSWarning => Self::DSWarning,
+            LLVMDiagnosticSeverity::LLVMDSRemark => Self::DSRemark,
+            LLVMDiagnosticSeverity::LLVMDSNote => Self::DSNote,
+        }
     }
 }
 

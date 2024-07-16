@@ -1,6 +1,13 @@
-use libc::c_uint;
-use llvm_sys::core::LLVMGetVersion;
+use libc::{c_char, c_uint};
+use llvm_sys::core::{LLVMDisposeMessage, LLVMGetVersion};
 use std::fmt::Display;
+
+/// Dispose LLVM message
+/// ## Safety
+/// Common function to dispose allocated message
+pub unsafe fn dispose_message(message: *mut c_char) {
+    unsafe { LLVMDisposeMessage(message) }
+}
 
 /// LLVM version representation
 pub struct Version {
@@ -13,7 +20,7 @@ impl Version {
     /// Init and return current LLVM version
     #[must_use]
     pub fn new() -> Self {
-        let mut major: c_uint = 0;
+        let mut major = 0;
         let mut minor: c_uint = 0;
         let mut patch: c_uint = 0;
         unsafe {
