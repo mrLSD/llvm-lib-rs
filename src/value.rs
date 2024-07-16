@@ -27,11 +27,15 @@ impl ValueRef {
         unsafe { Self(LLVMGetParam(***func_value, *CUint::from(index))) }
     }
 
-    /// Set value name, by default in LLVM values monotonic increased
-    pub fn set_value_name(&self, name: &str) {
+    /// Set the string name of a value. By default in LLVM values monotonic increased
+    pub fn set_value_name2(&self, name: &str) {
         unsafe {
             let c_name = CString::from(name);
-            LLVMSetValueName2(**self, c_name.as_ptr(), *SizeT::from(name.len()));
+            LLVMSetValueName2(
+                **self,
+                c_name.as_ptr(),
+                *SizeT::from(c_name.to_bytes().len()),
+            );
         }
     }
 
