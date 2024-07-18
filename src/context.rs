@@ -1,31 +1,12 @@
 use crate::types::{DiagnosticSeverity, TypeRef};
-use crate::{CInt, CStr, CString, CUint, SizeT, UnsafeMutVoidPtr};
-use llvm_sys::core::{
-    LLVMContextCreate, LLVMContextDispose, LLVMContextGetDiagnosticContext,
-    LLVMContextGetDiagnosticHandler, LLVMContextSetDiagnosticHandler,
-    LLVMContextSetDiscardValueNames, LLVMContextSetYieldCallback,
-    LLVMContextShouldDiscardValueNames, LLVMCreateEnumAttribute, LLVMCreateStringAttribute,
-    LLVMCreateTypeAttribute, LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity,
-    LLVMGetEnumAttributeKind, LLVMGetEnumAttributeKindForName, LLVMGetEnumAttributeValue,
-    LLVMGetGlobalContext, LLVMGetLastEnumAttributeKind, LLVMGetMDKindID, LLVMGetMDKindIDInContext,
-    LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMGetTypeAttributeValue,
-    LLVMGetTypeByName2, LLVMIsEnumAttribute, LLVMIsStringAttribute, LLVMIsTypeAttribute,
-};
+use crate::{CInt, CStr, CString, CUint, GetRef, SizeT, UnsafeMutVoidPtr};
+use llvm_sys::core;
 use llvm_sys::prelude::{LLVMAttributeRef, LLVMContextRef, LLVMDiagnosticInfoRef};
 use llvm_sys::{LLVMDiagnosticHandler, LLVMYieldCallback};
 use std::ops::Deref;
 
 /// LLVM Context wrapper
 pub struct ContextRef(LLVMContextRef);
-
-/// Get raw references trait
-pub trait GetRef {
-    /// Raw LLVM reference type
-    type RawRef;
-    /// Get LLVM raw reference
-    #[must_use]
-    fn get_ref(&self) -> Self::RawRef;
-}
 
 impl ContextRef {
     /// Create new LLVM Context
@@ -44,7 +25,7 @@ impl ContextRef {
     /// `Self::context_dispose` or the context will leak memory.
     #[must_use]
     pub fn create() -> Self {
-        unsafe { Self(LLVMContextCreate()) }
+        unsafe { Self(core::LLVMContextCreate()) }
     }
 
     /// Retrieves the global context instance.
@@ -61,7 +42,7 @@ impl ContextRef {
     /// context.
     #[must_use]
     pub fn get_global_context() -> Self {
-        unsafe { Self(LLVMGetGlobalContext()) }
+        unsafe { Self(core::LLVMGetGlobalContext()) }
     }
 
     /// Set debug diagnostic handler for this context.
@@ -77,34 +58,34 @@ impl ContextRef {
         diagnostic_context: UnsafeMutVoidPtr,
     ) {
         unsafe {
-            LLVMContextSetDiagnosticHandler(self.0, handler, *diagnostic_context);
+            core::LLVMContextSetDiagnosticHandler(self.0, handler, *diagnostic_context);
         }
     }
 
     /// Get the diagnostic handler of this context.
     #[must_use]
     pub fn get_diagnostic_handler(&self) -> LLVMDiagnosticHandler {
-        unsafe { LLVMContextGetDiagnosticHandler(self.0) }
+        unsafe { core::LLVMContextGetDiagnosticHandler(self.0) }
     }
 
     /// Get the diagnostic context of this context.
     #[must_use]
     pub fn get_diagnostic_context(&self) -> UnsafeMutVoidPtr {
         unsafe {
-            let raw_ptr = LLVMContextGetDiagnosticContext(self.0);
+            let raw_ptr = core::LLVMContextGetDiagnosticContext(self.0);
             UnsafeMutVoidPtr(raw_ptr)
         }
     }
 
     /// Set the yield callback function for this context.
     pub fn set_yield_callback(&self, callback: LLVMYieldCallback, opaque_handle: UnsafeMutVoidPtr) {
-        unsafe { LLVMContextSetYieldCallback(self.0, callback, *opaque_handle) }
+        unsafe { core::LLVMContextSetYieldCallback(self.0, callback, *opaque_handle) }
     }
 
     /// Retrieve whether the given context is set to discard all value names.
     #[must_use]
     pub fn should_discard_value_names(&self) -> bool {
-        unsafe { LLVMContextShouldDiscardValueNames(self.0) != 0 }
+        unsafe { core::LLVMContextShouldDiscardValueNames(self.0) != 0 }
     }
 
     /// Set whether the given context discards all value names.
@@ -113,7 +94,7 @@ impl ContextRef {
     /// This can be used to save memory and runtime, especially in release mode.
     pub fn set_discard_value_names(&self, discard: bool) {
         unsafe {
-            LLVMContextSetDiscardValueNames(self.get_ref(), *CInt::from(discard));
+            core::LLVMContextSetDiscardValueNames(self.get_ref(), *CInt::from(discard));
         }
     }
 
@@ -123,7 +104,7 @@ impl ContextRef {
     /// This should be called for every call to `self::context_create` (`LLVMContextCreate()`) or memory
     /// will be leaked.
     pub fn dispose(&self) {
-        unsafe { LLVMContextDispose(self.get_ref()) }
+        unsafe { core::LLVMContextDispose(self.get_ref()) }
     }
 
     /// Get  Metadata `KindId` by name in current Context.
@@ -155,7 +136,7 @@ impl ContextRef {
     #[must_use]
     pub fn get_type_by_name2(&self, name: &str) -> Option<TypeRef> {
         let c_name = CString::from(name);
-        let type_ref = unsafe { LLVMGetTypeByName2(self.get_ref(), c_name.as_ptr()) };
+        let type_ref = unsafe { core::LLVMGetTypeByName2(self.get_ref(), c_name.as_ptr()) };
         if type_ref.is_null() {
             None
         } else {
@@ -195,7 +176,7 @@ impl MetadataKindId {
     pub fn get_md_kind_id_in_context(context: &ContextRef, name: &str) -> Self {
         let c_name = CString::from(name);
         let id = unsafe {
-            LLVMGetMDKindIDInContext(
+            core::LLVMGetMDKindIDInContext(
                 context.get_ref(),
                 c_name.as_ptr(),
                 *CUint::from(c_name.to_bytes().len()),
@@ -209,7 +190,9 @@ impl MetadataKindId {
     #[must_use]
     pub fn get_md_kind_id(name: &str) -> Self {
         let c_name = CString::from(name);
-        let id = unsafe { LLVMGetMDKindID(c_name.as_ptr(), *CUint::from(c_name.to_bytes().len())) };
+        let id = unsafe {
+            core::LLVMGetMDKindID(c_name.as_ptr(), *CUint::from(c_name.to_bytes().len()))
+        };
         Self(id)
     }
 }
@@ -243,47 +226,50 @@ impl AttributeRef {
     #[must_use]
     pub fn get_enum_attribute_kind_for_name(name: &str) -> u32 {
         let c_name = CString::from(name);
-        unsafe { LLVMGetEnumAttributeKindForName(c_name.as_ptr(), *SizeT(c_name.to_bytes().len())) }
+        unsafe {
+            core::LLVMGetEnumAttributeKindForName(c_name.as_ptr(), *SizeT(c_name.to_bytes().len()))
+        }
     }
 
     /// Get last enum attribute
     #[must_use]
     pub fn get_last_enum_attribute_kind() -> u32 {
-        unsafe { LLVMGetLastEnumAttributeKind() }
+        unsafe { core::LLVMGetLastEnumAttributeKind() }
     }
 
     /// Create an enum attribute.
     #[must_use]
     pub fn create_enum_attribute(context: &ContextRef, kind_id: u32, val: u64) -> Self {
         let attr =
-            unsafe { LLVMCreateEnumAttribute(context.get_ref(), *CUint::from(kind_id), val) };
+            unsafe { core::LLVMCreateEnumAttribute(context.get_ref(), *CUint::from(kind_id), val) };
         Self(attr)
     }
 
     /// Get the unique id corresponding to the enum attribute passed as argument.
     #[must_use]
     pub fn get_enum_attribute_kind(&self) -> u32 {
-        unsafe { LLVMGetEnumAttributeKind(self.0) }
+        unsafe { core::LLVMGetEnumAttributeKind(self.0) }
     }
 
     /// Get the enum attribute's value. 0 is returned if none exists.
     #[must_use]
     pub fn get_enum_attribute_value(&self) -> u64 {
-        unsafe { LLVMGetEnumAttributeValue(self.0) }
+        unsafe { core::LLVMGetEnumAttributeValue(self.0) }
     }
 
     /// Create a type attribute
     #[must_use]
     pub fn create_type_attribute(context: &ContextRef, kind_id: u32, type_ref: &TypeRef) -> Self {
-        let attr =
-            unsafe { LLVMCreateTypeAttribute(context.get_ref(), kind_id, type_ref.get_ref()) };
+        let attr = unsafe {
+            core::LLVMCreateTypeAttribute(context.get_ref(), kind_id, type_ref.get_ref())
+        };
         Self(attr)
     }
 
     /// Get the type attribute's value.
     #[must_use]
     pub fn get_type_attribute_value(&self) -> TypeRef {
-        let type_ref = unsafe { LLVMGetTypeAttributeValue(self.0) };
+        let type_ref = unsafe { core::LLVMGetTypeAttributeValue(self.0) };
         type_ref.into()
     }
 
@@ -293,7 +279,7 @@ impl AttributeRef {
         let c_key = CString::from(key);
         let c_value = CString::from(value);
         let attr = unsafe {
-            LLVMCreateStringAttribute(
+            core::LLVMCreateStringAttribute(
                 context.get_ref(),
                 c_key.as_ptr(),
                 *CUint::from(c_key.to_bytes().len()),
@@ -309,7 +295,7 @@ impl AttributeRef {
     pub fn get_string_attribute_kind(&self) -> Option<String> {
         let mut length = *CUint::from(0_usize);
         unsafe {
-            let c_str = LLVMGetStringAttributeKind(self.0, &mut length);
+            let c_str = core::LLVMGetStringAttributeKind(self.0, &mut length);
             if c_str.is_null() {
                 return None;
             }
@@ -322,7 +308,7 @@ impl AttributeRef {
     pub fn get_string_attribute_value(&self) -> Option<String> {
         let mut length = *CUint::from(0_usize);
         unsafe {
-            let c_str = LLVMGetStringAttributeValue(self.get_ref(), &mut length);
+            let c_str = core::LLVMGetStringAttributeValue(self.get_ref(), &mut length);
             if c_str.is_null() {
                 return None;
             }
@@ -333,19 +319,19 @@ impl AttributeRef {
     /// Check for the  types of attributes.
     #[must_use]
     pub fn is_enum(&self) -> bool {
-        unsafe { LLVMIsEnumAttribute(self.get_ref()) != 0 }
+        unsafe { core::LLVMIsEnumAttribute(self.get_ref()) != 0 }
     }
 
     /// Check for the  types of attributes.
     #[must_use]
     pub fn is_string(&self) -> bool {
-        unsafe { LLVMIsStringAttribute(self.get_ref()) != 0 }
+        unsafe { core::LLVMIsStringAttribute(self.get_ref()) != 0 }
     }
 
     /// Check for the  types of attributes.
     #[must_use]
     pub fn is_type(&self) -> bool {
-        unsafe { LLVMIsTypeAttribute(self.get_ref()) != 0 }
+        unsafe { core::LLVMIsTypeAttribute(self.get_ref()) != 0 }
     }
 }
 
@@ -371,7 +357,7 @@ impl DiagnosticInfoRef {
     #[must_use]
     pub fn get_description(&self) -> Option<String> {
         unsafe {
-            let c_str = LLVMGetDiagInfoDescription(self.get_ref());
+            let c_str = core::LLVMGetDiagInfoDescription(self.get_ref());
             if c_str.is_null() {
                 return None;
             }
@@ -386,7 +372,7 @@ impl DiagnosticInfoRef {
     #[must_use]
     pub fn get_severity(&self) -> DiagnosticSeverity {
         unsafe {
-            let severity = LLVMGetDiagInfoSeverity(self.get_ref());
+            let severity = core::LLVMGetDiagInfoSeverity(self.get_ref());
             DiagnosticSeverity::from(severity)
         }
     }
