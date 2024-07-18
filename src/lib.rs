@@ -9,7 +9,15 @@ pub mod types;
 pub mod value;
 
 use libc::{c_char, c_int, c_uint, size_t};
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
+
+/// Get raw references trait
+pub trait GetRef {
+    /// Raw LLVM reference type
+    type RawRef;
+    /// Get LLVM raw reference
+    fn get_ref(&self) -> Self::RawRef;
+}
 
 /// `c_uint` wrapper (from C-type)
 pub struct CUint(c_uint);
@@ -72,6 +80,12 @@ impl Deref for SizeT {
     type Target = size_t;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for SizeT {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
