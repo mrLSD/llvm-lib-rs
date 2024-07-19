@@ -1,7 +1,5 @@
-use crate::context::ContextRef;
-use crate::types::TypeRef;
-use crate::value::ValueRef;
-use crate::{CInt, CStr, CString, GetRef, SizeT};
+use std::ops::Deref;
+
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddModuleFlag, LLVMAppendModuleInlineAsm, LLVMCloneModule,
     LLVMCopyModuleFlagsMetadata, LLVMDisposeModule, LLVMDisposeModuleFlagsMetadata, LLVMDumpModule,
@@ -14,7 +12,11 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::{LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef};
 use llvm_sys::{LLVMInlineAsmDialect, LLVMModuleFlagBehavior};
-use std::ops::Deref;
+
+use crate::context::ContextRef;
+use crate::types::TypeRef;
+use crate::value::ValueRef;
+use crate::{CInt, CStr, CString, GetRef, SizeT};
 
 /// Inline Asm Dialect
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

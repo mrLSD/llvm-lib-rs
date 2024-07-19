@@ -1,8 +1,5 @@
-use crate::context::ContextRef;
-use crate::GetRef;
 use std::ops::Deref;
 
-use crate::CUint;
 use llvm_sys::core::{
     LLVMArrayType2, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFunctionType,
     LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
@@ -10,6 +7,10 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::LLVMDiagnosticSeverity;
+
+use crate::context::ContextRef;
+use crate::CUint;
+use crate::GetRef;
 
 /// Wrapper for `LLVMDiagnosticSeverity`
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

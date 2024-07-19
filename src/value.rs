@@ -1,10 +1,10 @@
-use super::module::ModuleRef;
-use super::types::TypeRef;
-use crate::{CStr, CString, CUint, GetRef, SizeT};
-use llvm_sys::core::{LLVMAddFunction, LLVMGetInlineAsmAsmString, LLVMGetParam, LLVMSetValueName2};
-use llvm_sys::prelude::LLVMValueRef;
 use std::ops::Deref;
 use std::rc::Rc;
+
+use llvm_sys::core::{LLVMGetInlineAsmAsmString, LLVMGetParam, LLVMSetValueName2};
+use llvm_sys::prelude::LLVMValueRef;
+
+use crate::{CStr, CString, CUint, GetRef, SizeT};
 
 /// LLVM Value wrapper
 pub struct ValueRef(LLVMValueRef);
