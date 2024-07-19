@@ -20,6 +20,7 @@ pub trait GetRef {
 }
 
 /// `c_uint` wrapper (from C-type)
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct CUint(c_uint);
 
 impl From<u32> for CUint {
@@ -44,6 +45,7 @@ impl Deref for CUint {
 }
 
 /// `c_int` wrapper (from C-type)
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct CInt(c_int);
 
 impl From<i32> for CInt {
@@ -67,6 +69,7 @@ impl Deref for CInt {
 }
 
 /// `size_t` wrapper (from C-type)
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct SizeT(size_t);
 
 impl From<usize> for SizeT {
@@ -90,6 +93,7 @@ impl DerefMut for SizeT {
 }
 
 /// `CString` wrapper
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CString(std::ffi::CString);
 
 impl From<&str> for CString {
@@ -107,6 +111,7 @@ impl Deref for CString {
 }
 
 /// `CStr` wrapper
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CStr<'a>(&'a std::ffi::CStr);
 
 impl<'a> CStr<'a> {
@@ -116,6 +121,13 @@ impl<'a> CStr<'a> {
     #[must_use]
     pub unsafe fn new(value: *const c_char) -> Self {
         unsafe { Self(std::ffi::CStr::from_ptr(value)) }
+    }
+}
+
+impl<'a> Deref for CStr<'a> {
+    type Target = std::ffi::CStr;
+    fn deref(&self) -> &Self::Target {
+        self.0
     }
 }
 
@@ -130,7 +142,7 @@ impl<'a> ToString for CStr<'a> {
 }
 
 /// Wrapping for `*mut c_void`
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct UnsafeMutVoidPtr(*mut std::ffi::c_void);
 
 impl Deref for UnsafeMutVoidPtr {

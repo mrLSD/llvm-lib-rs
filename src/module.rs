@@ -1,19 +1,147 @@
 use crate::context::ContextRef;
-use crate::{CStr, CString, GetRef, SizeT};
+use crate::types::TypeRef;
+use crate::value::ValueRef;
+use crate::{CInt, CStr, CString, GetRef, SizeT};
 use llvm_sys::core::{
-    LLVMCloneModule, LLVMCopyModuleFlagsMetadata, LLVMDisposeModule,
-    LLVMDisposeModuleFlagsMetadata, LLVMDumpModule, LLVMGetDataLayoutStr, LLVMGetModuleIdentifier,
-    LLVMGetSourceFileName, LLVMGetTarget, LLVMModuleCreateWithName,
-    LLVMModuleCreateWithNameInContext, LLVMSetDataLayout, LLVMSetModuleIdentifier,
+    LLVMAddFunction, LLVMAddModuleFlag, LLVMAppendModuleInlineAsm, LLVMCloneModule,
+    LLVMCopyModuleFlagsMetadata, LLVMDisposeModule, LLVMDisposeModuleFlagsMetadata, LLVMDumpModule,
+    LLVMGetDataLayoutStr, LLVMGetInlineAsm, LLVMGetModuleFlag, LLVMGetModuleIdentifier,
+    LLVMGetModuleInlineAsm, LLVMGetSourceFileName, LLVMGetTarget, LLVMModuleCreateWithName,
+    LLVMModuleCreateWithNameInContext, LLVMModuleFlagEntriesGetFlagBehavior,
+    LLVMModuleFlagEntriesGetKey, LLVMModuleFlagEntriesGetMetadata, LLVMPrintModuleToFile,
+    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetModuleInlineAsm2,
     LLVMSetSourceFileName, LLVMSetTarget,
 };
-use llvm_sys::prelude::{LLVMModuleFlagEntry, LLVMModuleRef};
+use llvm_sys::prelude::{LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef};
+use llvm_sys::{LLVMInlineAsmDialect, LLVMModuleFlagBehavior};
 use std::ops::Deref;
 
-/// Wrapper for `ModuleFlagEntry`
-// TODO: manage lengtn read
+/// Inline Asm Dialect
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum InlineAsmDialect {
+    InlineAsmDialectATT,
+    InlineAsmDialectIntel,
+}
+
+impl From<InlineAsmDialect> for LLVMInlineAsmDialect {
+    fn from(value: InlineAsmDialect) -> Self {
+        match value {
+            InlineAsmDialect::InlineAsmDialectATT => Self::LLVMInlineAsmDialectATT,
+            InlineAsmDialect::InlineAsmDialectIntel => Self::LLVMInlineAsmDialectIntel,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct MetadataRef(LLVMMetadataRef);
+
+/// Represents flags that describe information about the module for use by
+/// an external entity e.g. the dynamic linker.
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct ModuleFlagEntry(*mut LLVMModuleFlagEntry, SizeT);
+
+impl ModuleFlagEntry {
+    /// Get the number of module flag metadata entries.
+    #[must_use]
+    pub fn get_count(&self) -> usize {
+        *self.1
+    }
+
+    /// Destroys module flags metadata entries.
+    pub fn dispose_module_flags_metadata(&self) {
+        unsafe {
+            LLVMDisposeModuleFlagsMetadata(self.0);
+        }
+    }
+
+    /// Returns the flag behavior for a module flag entry at a specific index.
+    #[must_use]
+    pub fn get_flag_behavior(&self, index: u32) -> ModuleFlagBehavior {
+        let behavior = unsafe { LLVMModuleFlagEntriesGetFlagBehavior(self.0, index) };
+        behavior.into()
+    }
+
+    /// Returns the key for a module flag entry at a specific index.
+    #[must_use]
+    pub fn get_key(&self, index: u32) -> Option<String> {
+        unsafe {
+            let mut length: usize = 0;
+            let c_str = LLVMModuleFlagEntriesGetKey(self.0, index, &mut length);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
+        }
+    }
+
+    /// Returns the metadata for a module flag entry at a specific index.
+    #[must_use]
+    pub fn get_metadata(&self, index: u32) -> MetadataRef {
+        let metadata = unsafe { LLVMModuleFlagEntriesGetMetadata(self.0, index) };
+        MetadataRef(metadata)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ModuleFlagBehavior {
+    /// Emits an error if two values disagree, otherwise the resulting value is that of the operands.
+    ModuleFlagBehaviorError,
+    /// Emits a warning if two values disagree. The result value will be the operand for the flag
+    /// // from the first module being linked.
+    ModuleFlagBehaviorWarning,
+    /// Adds a requirement that another module flag be present and have a specified value after
+    /// // linking is performed. The value must be a metadata pair, where the first element of
+    /// the pair is the ID of the module flag to be restricted, and the second element of the pair
+    /// is the value the module flag should be restricted to. This behavior can be used to restrict
+    /// the allowable results (via triggering of an error) of linking IDs with the **Override** behavior.
+    ModuleFlagBehaviorRequire,
+    /// Uses the specified value, regardless of the behavior or value of the other module. If both
+    /// modules specify **Override**, but the values differ, an error will be emitted.
+    ModuleFlagBehaviorOverride,
+    /// Appends the two values, which are required to be metadata nodes.
+    ModuleFlagBehaviorAppend,
+    /// Appends the two values, which are required to be metadata nodes. However, duplicate entries
+    /// in the second list are dropped during the append operation.
+    ModuleFlagBehaviorAppendUnique,
+}
+
+impl From<LLVMModuleFlagBehavior> for ModuleFlagBehavior {
+    fn from(value: LLVMModuleFlagBehavior) -> Self {
+        match value {
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorError => Self::ModuleFlagBehaviorError,
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorWarning => {
+                Self::ModuleFlagBehaviorWarning
+            }
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorRequire => {
+                Self::ModuleFlagBehaviorRequire
+            }
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorOverride => {
+                Self::ModuleFlagBehaviorOverride
+            }
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorAppend => Self::ModuleFlagBehaviorAppend,
+            LLVMModuleFlagBehavior::LLVMModuleFlagBehaviorAppendUnique => {
+                Self::ModuleFlagBehaviorAppendUnique
+            }
+        }
+    }
+}
+
+impl From<ModuleFlagBehavior> for LLVMModuleFlagBehavior {
+    fn from(value: ModuleFlagBehavior) -> Self {
+        match value {
+            ModuleFlagBehavior::ModuleFlagBehaviorError => Self::LLVMModuleFlagBehaviorError,
+            ModuleFlagBehavior::ModuleFlagBehaviorWarning => Self::LLVMModuleFlagBehaviorWarning,
+            ModuleFlagBehavior::ModuleFlagBehaviorRequire => Self::LLVMModuleFlagBehaviorRequire,
+            ModuleFlagBehavior::ModuleFlagBehaviorOverride => Self::LLVMModuleFlagBehaviorOverride,
+            ModuleFlagBehavior::ModuleFlagBehaviorAppend => Self::LLVMModuleFlagBehaviorAppend,
+            ModuleFlagBehavior::ModuleFlagBehaviorAppendUnique => {
+                Self::LLVMModuleFlagBehaviorAppendUnique
+            }
+        }
+    }
+}
 
 /// LLVM Module wrapper
 pub struct ModuleRef(LLVMModuleRef);
@@ -167,93 +295,27 @@ impl ModuleRef {
         }
     }
 
-    /// Destroys module flags metadata entries.
-    pub fn dispose_module_flags_metadata(&self, entries: &ModuleFlagEntry) {
+    /// Add a module-level flag to the module-level flags metadata if it doesn't already exist.
+    #[must_use]
+    pub fn get_module_flag(&self, key: &str) -> MetadataRef {
+        let c_key = CString::from(key);
+        let metadata =
+            unsafe { LLVMGetModuleFlag(self.0, c_key.as_ptr(), *SizeT(c_key.to_bytes().len())) };
+        MetadataRef(metadata)
+    }
+
+    pub fn add_module_flag(&self, behavior: &ModuleFlagBehavior, key: &str, val: &MetadataRef) {
+        let c_key = CString::from(key);
         unsafe {
-            LLVMDisposeModuleFlagsMetadata(entries.0);
+            LLVMAddModuleFlag(
+                self.0,
+                (*behavior).into(),
+                c_key.as_ptr(),
+                c_key.to_bytes().len(),
+                val.0,
+            );
         }
     }
-    /*
-       pub fn get_flag_behavior(
-           &self,
-           entries: *mut LLVMModuleFlagEntry,
-           index: u32,
-       ) -> LLVMModuleFlagBehavior {
-           unsafe { LLVMModuleFlagEntriesGetFlagBehavior(entries, index) }
-       }
-
-       pub fn get_key(&self, entries: *mut LLVMModuleFlagEntry, index: u32) -> Option<String> {
-           unsafe {
-               let mut len: usize = 0;
-               let c_str = LLVMModuleFlagEntriesGetKey(entries, index, &mut len);
-               if c_str.is_null() {
-                   None
-               } else {
-                   Some(CStr::from_ptr(c_str).to_string_lossy().into_owned())
-               }
-           }
-       }
-
-       pub fn get_metadata(&self, entries: *mut LLVMModuleFlagEntry, index: u32) -> LLVMMetadataRef {
-           unsafe { LLVMModuleFlagEntriesGetMetadata(entries, index) }
-       }
-
-       pub fn get_module_flag(&self, key: &str) -> LLVMMetadataRef {
-           let c_key = CString::new(key).expect("CString::new failed");
-           unsafe { LLVMGetModuleFlag(self.0, c_key.as_ptr(), c_key.to_bytes().len()) }
-       }
-
-       pub fn add_module_flag(
-           &self,
-           behavior: LLVMModuleFlagBehavior,
-           key: &str,
-           val: LLVMMetadataRef,
-       ) {
-           let c_key = CString::new(key).expect("CString::new failed");
-           unsafe {
-               LLVMAddModuleFlag(
-                   self.0,
-                   behavior,
-                   c_key.as_ptr(),
-                   c_key.to_bytes().len(),
-                   val,
-               );
-           }
-       }
-
-       pub fn dump_module(&self) {
-           unsafe {
-               LLVMDumpModule(self.0);
-           }
-       }
-
-       pub fn print_module_to_file(&self, filename: &str) -> Result<(), String> {
-           let c_filename = CString::new(filename).expect("CString::new failed");
-           let mut error_message: *mut c_char = ptr::null_mut();
-           let result =
-               unsafe { LLVMPrintModuleToFile(self.0, c_filename.as_ptr(), &mut error_message) };
-           if result == 0 {
-               Ok(())
-           } else {
-               let error = unsafe { CStr::from_ptr(error_message).to_string_lossy().into_owned() };
-               unsafe { llvm::core::LLVMDisposeMessage(error_message) };
-               Err(error)
-           }
-       }
-
-       pub fn print_module_to_string(&self) -> Option<String> {
-           unsafe {
-               let c_str = LLVMPrintModuleToString(self.0);
-               if c_str.is_null() {
-                   None
-               } else {
-                   let result = CStr::from_ptr(c_str).to_string_lossy().into_owned();
-                   llvm::core::LLVMDisposeMessage(c_str);
-                   Some(result)
-               }
-           }
-       }
-    */
 
     /// Dump module to stdout
     pub fn dump_module(&self) {
@@ -261,7 +323,171 @@ impl ModuleRef {
             LLVMDumpModule(self.0);
         }
     }
+
+    /// Print a representation of a module to a file. The `ErrorMessage` needs to be
+    ///  disposed with `core::dispose_message`. Returns 0 on success, 1 otherwise.
+    ///
+    /// # Errors
+    /// Return error as `String` if print module fails
+    pub fn print_module_to_file(&self, filename: &str) -> Result<(), String> {
+        let c_filename = CString::from(filename);
+        let mut error_message: *mut std::ffi::c_char = std::ptr::null_mut();
+        let result =
+            unsafe { LLVMPrintModuleToFile(self.0, c_filename.as_ptr(), &mut error_message) };
+        if result == 0 {
+            Ok(())
+        } else {
+            unsafe {
+                let error = CStr::new(error_message).to_string();
+                crate::core::dispose_message(error_message);
+                Err(error)
+            }
+        }
+    }
+
+    /// Return a string representation of the module.
+    #[must_use]
+    pub fn print_module_to_string(&self) -> Option<String> {
+        unsafe {
+            let c_str = LLVMPrintModuleToString(self.0);
+            if c_str.is_null() {
+                None
+            } else {
+                let result = CStr::new(c_str).to_string();
+                crate::core::dispose_message(c_str);
+                Some(result)
+            }
+        }
+    }
+
+    /// Get inline assembly for a module.
+    #[must_use]
+    pub fn get_module_inline_asm(&self) -> Option<String> {
+        unsafe {
+            let mut len = SizeT::from(0_usize);
+            let c_str = LLVMGetModuleInlineAsm(self.0, &mut *len);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
+        }
+    }
+
+    /// Set inline assembly for a module.
+    pub fn set_module_inline_asm(&self, asm: &str) {
+        let c_asm = CString::from(asm);
+        unsafe {
+            LLVMSetModuleInlineAsm2(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+        }
+    }
+
+    /// Append inline assembly to a module.
+    pub fn append_module_inline_asm(&self, asm: &str) {
+        let c_asm = CString::from(asm);
+        unsafe {
+            LLVMAppendModuleInlineAsm(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+        }
+    }
+
+    /// Set add function value based on Function type
+    #[must_use]
+    pub fn add_function(&self, fn_name: &str, fn_type: &TypeRef) -> ValueRef {
+        unsafe {
+            let c_name = CString::from(fn_name);
+            ValueRef::from(LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
+        }
+    }
 }
+
+/// Get the template string used for an inline assembly snippet.
+#[must_use]
+pub fn get_inline_asm_asm_string(inline_asm_val: &ValueRef) -> Option<String> {
+    inline_asm_val.get_inline_asm_asm_string()
+}
+
+/// Create the specified unique inline asm string.
+#[must_use]
+pub fn get_inline_asm(
+    ty: &TypeRef,
+    asm_string: &str,
+    constraints: &str,
+    has_side_effects: bool,
+    is_align_stack: bool,
+    dialect: InlineAsmDialect,
+    can_throw: bool,
+) -> ValueRef {
+    let c_asm_string = CString::from(asm_string);
+    let c_constraints = CString::from(constraints);
+    let value_ref = unsafe {
+        LLVMGetInlineAsm(
+            ty.get_ref(),
+            c_asm_string.as_ptr(),
+            *SizeT(c_asm_string.to_bytes().len()),
+            c_constraints.as_ptr(),
+            *SizeT(c_constraints.to_bytes().len()),
+            *CInt::from(has_side_effects),
+            *CInt::from(is_align_stack),
+            dialect.into(),
+            *CInt::from(can_throw),
+        )
+    };
+    ValueRef::from(value_ref)
+}
+
+/*
+
+/// Get the raw constraint string for an inline assembly snippet.
+    pub fn get_inline_asm_constraint_string(&self, inline_asm_val: LLVMValueRef) -> Option<String> {
+        unsafe {
+            let mut len: usize = 0;
+            let c_str = LLVMGetInlineAsmConstraintString(inline_asm_val, &mut len);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(c_str).to_string_lossy().into_owned())
+            }
+        }
+    }
+
+     /// Get the dialect used by the inline asm snippet.
+    pub fn get_inline_asm_dialect(&self, inline_asm_val: LLVMValueRef) -> LLVMInlineAsmDialect {
+        unsafe {
+            LLVMGetInlineAsmDialect(inline_asm_val)
+        }
+    }
+
+    /// Get the function type of the inline assembly snippet.
+    ///
+    /// This is the same type that was passed into LLVMGetInlineAsm originally.
+    pub fn get_inline_asm_function_type(&self, inline_asm_val: LLVMValueRef) -> LLVMTypeRef {
+        unsafe {
+            LLVMGetInlineAsmFunctionType(inline_asm_val)
+        }
+    }
+
+/// Get if the inline asm snippet has side effects
+    pub fn get_inline_asm_has_side_effects(&self, inline_asm_val: LLVMValueRef) -> bool {
+        unsafe {
+            LLVMGetInlineAsmHasSideEffects(inline_asm_val) != 0
+        }
+    }
+
+/// Get if the inline asm snippet needs an aligned stack
+    pub fn get_inline_asm_needs_aligned_stack(&self, inline_asm_val: LLVMValueRef) -> bool {
+        unsafe {
+            LLVMGetInlineAsmNeedsAlignedStack(inline_asm_val) != 0
+        }
+    }
+
+/// Get if the inline asm snippet may unwind the stack
+    pub fn get_inline_asm_can_unwind(&self, inline_asm_val: LLVMValueRef) -> bool {
+        unsafe {
+            LLVMGetInlineAsmCanUnwind(inline_asm_val) != 0
+        }
+    }
+}
+*/
 
 impl Deref for ModuleRef {
     type Target = LLVMModuleRef;
