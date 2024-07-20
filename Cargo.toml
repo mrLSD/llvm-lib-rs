@@ -1,6 +1,6 @@
 [package]
 name = "llvm-lib"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Evgeny Ukhanov <evgeny@ukhanov.org.ua>"]
 description = "LLVM library with safe and flexibility in mind, without over complexity based on LLVM-C API"
 categories = ["compilers", "development-tools", "development-tools::build-utils"]
@@ -13,5 +13,5 @@ repository = "https://github.com/mrLSD/llvm-lib-rs"
 doctest = false
 
 [dependencies]
-llvm-sys = "181.0"
+llvm-sys = "181.1"
 libc = "0.2"
