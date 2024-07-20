@@ -8,6 +8,12 @@ use std::ops::Deref;
 /// LLVM Context wrapper
 pub struct ContextRef(LLVMContextRef);
 
+impl From<LLVMContextRef> for ContextRef {
+    fn from(value: LLVMContextRef) -> Self {
+        Self(value)
+    }
+}
+
 impl ContextRef {
     /// Create new LLVM Context
     #[must_use]

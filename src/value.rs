@@ -1,9 +1,15 @@
 use std::ops::Deref;
 use std::rc::Rc;
 
-use llvm_sys::core::{LLVMGetInlineAsmAsmString, LLVMGetParam, LLVMSetValueName2};
+use llvm_sys::core::{
+    LLVMGetInlineAsmAsmString, LLVMGetInlineAsmCanUnwind, LLVMGetInlineAsmConstraintString,
+    LLVMGetInlineAsmDialect, LLVMGetInlineAsmFunctionType, LLVMGetInlineAsmHasSideEffects,
+    LLVMGetInlineAsmNeedsAlignedStack, LLVMGetParam, LLVMSetValueName2,
+};
 use llvm_sys::prelude::LLVMValueRef;
 
+use crate::module::InlineAsmDialect;
+use crate::types::TypeRef;
 use crate::{CStr, CString, CUint, GetRef, SizeT};
 
 /// LLVM Value wrapper
@@ -51,6 +57,53 @@ impl ValueRef {
                 Some(CStr::new(c_str).to_string())
             }
         }
+    }
+
+    /// Get the raw constraint string for an inline assembly snippet.
+    #[must_use]
+    pub fn get_inline_asm_constraint_string(&self) -> Option<String> {
+        unsafe {
+            let mut length = SizeT::from(0_usize);
+            let c_str = LLVMGetInlineAsmConstraintString(self.0, &mut *length);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
+        }
+    }
+
+    /// Get the dialect used by the inline asm snippet.
+    #[must_use]
+    pub fn get_inline_asm_dialect(&self) -> InlineAsmDialect {
+        let inline_asm_dialect = unsafe { LLVMGetInlineAsmDialect(self.0) };
+        inline_asm_dialect.into()
+    }
+
+    /// Get the function type of the inline assembly snippet.
+    ///
+    /// This is the same type that was passed into `LLVMGetInlineAsm` originally.
+    #[must_use]
+    pub fn get_inline_asm_function_type(&self) -> TypeRef {
+        TypeRef::from(unsafe { LLVMGetInlineAsmFunctionType(self.0) })
+    }
+
+    /// Get if the inline asm snippet has side effects
+    #[must_use]
+    pub fn get_inline_asm_has_side_effects(&self) -> bool {
+        unsafe { LLVMGetInlineAsmHasSideEffects(self.0) != 0 }
+    }
+
+    /// Get if the inline asm snippet needs an aligned stack
+    #[must_use]
+    pub fn get_inline_asm_needs_aligned_stack(&self) -> bool {
+        unsafe { LLVMGetInlineAsmNeedsAlignedStack(self.0) != 0 }
+    }
+
+    /// Get if the inline asm snippet may unwind the stack
+    #[must_use]
+    pub fn get_inline_asm_can_unwind(&self) -> bool {
+        unsafe { LLVMGetInlineAsmCanUnwind(self.0) != 0 }
     }
 }
 

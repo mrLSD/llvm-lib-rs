@@ -1,16 +1,22 @@
 use std::ops::Deref;
 
 use llvm_sys::core::{
-    LLVMAddFunction, LLVMAddModuleFlag, LLVMAppendModuleInlineAsm, LLVMCloneModule,
-    LLVMCopyModuleFlagsMetadata, LLVMDisposeModule, LLVMDisposeModuleFlagsMetadata, LLVMDumpModule,
-    LLVMGetDataLayoutStr, LLVMGetInlineAsm, LLVMGetModuleFlag, LLVMGetModuleIdentifier,
-    LLVMGetModuleInlineAsm, LLVMGetSourceFileName, LLVMGetTarget, LLVMModuleCreateWithName,
+    LLVMAddFunction, LLVMAddModuleFlag, LLVMAddNamedMetadataOperand, LLVMAppendModuleInlineAsm,
+    LLVMCloneModule, LLVMCopyModuleFlagsMetadata, LLVMDisposeModule,
+    LLVMDisposeModuleFlagsMetadata, LLVMDumpModule, LLVMGetDataLayoutStr,
+    LLVMGetFirstNamedMetadata, LLVMGetInlineAsm, LLVMGetLastNamedMetadata, LLVMGetModuleContext,
+    LLVMGetModuleFlag, LLVMGetModuleIdentifier, LLVMGetModuleInlineAsm, LLVMGetNamedMetadata,
+    LLVMGetNamedMetadataName, LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands,
+    LLVMGetNextNamedMetadata, LLVMGetOrInsertNamedMetadata, LLVMGetPreviousNamedMetadata,
+    LLVMGetSourceFileName, LLVMGetTarget, LLVMModuleCreateWithName,
     LLVMModuleCreateWithNameInContext, LLVMModuleFlagEntriesGetFlagBehavior,
     LLVMModuleFlagEntriesGetKey, LLVMModuleFlagEntriesGetMetadata, LLVMPrintModuleToFile,
     LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetModuleInlineAsm2,
     LLVMSetSourceFileName, LLVMSetTarget,
 };
-use llvm_sys::prelude::{LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef};
+use llvm_sys::prelude::{
+    LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef, LLVMNamedMDNodeRef, LLVMValueRef,
+};
 use llvm_sys::{LLVMInlineAsmDialect, LLVMModuleFlagBehavior};
 
 use crate::context::ContextRef;
@@ -30,6 +36,72 @@ impl From<InlineAsmDialect> for LLVMInlineAsmDialect {
         match value {
             InlineAsmDialect::InlineAsmDialectATT => Self::LLVMInlineAsmDialectATT,
             InlineAsmDialect::InlineAsmDialectIntel => Self::LLVMInlineAsmDialectIntel,
+        }
+    }
+}
+
+impl From<LLVMInlineAsmDialect> for InlineAsmDialect {
+    fn from(value: LLVMInlineAsmDialect) -> Self {
+        match value {
+            LLVMInlineAsmDialect::LLVMInlineAsmDialectATT => Self::InlineAsmDialectATT,
+            LLVMInlineAsmDialect::LLVMInlineAsmDialectIntel => Self::InlineAsmDialectIntel,
+        }
+    }
+}
+
+/// Named Metadata Node.
+/// Used to associate metadata with a module in a way that is identifiable by a name. These nodes
+/// can be used for various purposes, such as attaching additional information to a module that can
+/// be used by the compiler or other tools processing the LLVM IR.
+#[derive(Debug)]
+pub struct NamedMetadataNodeRef(LLVMNamedMDNodeRef);
+
+impl From<LLVMNamedMDNodeRef> for NamedMetadataNodeRef {
+    fn from(value: LLVMNamedMDNodeRef) -> Self {
+        Self(value)
+    }
+}
+
+impl NamedMetadataNodeRef {
+    /// Advance a `NamedMetaDataNode` iterator to the next `NamedMetaDataNode`.
+    ///
+    /// Returns NULL if the iterator was already at the end and there are no more
+    /// named metadata nodes.
+    #[must_use]
+    pub fn get_next(&self) -> Option<Self> {
+        let next_md = unsafe { LLVMGetNextNamedMetadata(self.0) };
+        if next_md.is_null() {
+            None
+        } else {
+            Some(next_md.into())
+        }
+    }
+
+    /// Decrement a `NamedMetaDataNode` iterator to the previous `NamedMetaDataNode`.
+    ///
+    /// Returns NULL if the iterator was already at the beginning and there are
+    /// no previously named metadata nodes.
+    #[must_use]
+    pub fn get_previous(&self) -> Option<Self> {
+        let prev_md = unsafe { LLVMGetPreviousNamedMetadata(self.0) };
+        if prev_md.is_null() {
+            None
+        } else {
+            Some(prev_md.into())
+        }
+    }
+
+    /// Retrieve the name of a `NamedMetadataNode`.
+    #[must_use]
+    pub fn get_name(&self) -> Option<String> {
+        let mut length = SizeT::from(0_usize);
+        unsafe {
+            let c_str = LLVMGetNamedMetadataName(self.0, &mut *length);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
         }
     }
 }
@@ -400,6 +472,89 @@ impl ModuleRef {
             ValueRef::from(LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
         }
     }
+
+    /// Obtain the context to which this module is associated.
+    #[must_use]
+    pub fn get_module_context(&self) -> ContextRef {
+        ContextRef::from(unsafe { LLVMGetModuleContext(self.0) })
+    }
+
+    /// Obtain an iterator to the first `NamedMDNode` in a `Module`.
+    #[must_use]
+    pub fn get_first_named_metadata(&self) -> Option<NamedMetadataNodeRef> {
+        let md = unsafe { LLVMGetFirstNamedMetadata(self.0) };
+        if md.is_null() {
+            None
+        } else {
+            Some(md.into())
+        }
+    }
+
+    /// Obtain an iterator to the last `NamedMDNode` in a Module.
+    #[must_use]
+    pub fn get_last_named_metadata(&self) -> Option<NamedMetadataNodeRef> {
+        let md = unsafe { LLVMGetLastNamedMetadata(self.0) };
+        if md.is_null() {
+            None
+        } else {
+            Some(md.into())
+        }
+    }
+
+    ///  Retrieve a `NamedMetadataNode` with the given name, returning `None` if no such node exists.
+    #[must_use]
+    pub fn get_named_metadata(&self, name: &str) -> Option<NamedMetadataNodeRef> {
+        let c_name = CString::from(name);
+        let md = unsafe {
+            LLVMGetNamedMetadata(self.0, c_name.as_ptr(), *SizeT(c_name.as_bytes().len()))
+        };
+        if md.is_null() {
+            None
+        } else {
+            Some(md.into())
+        }
+    }
+
+    /// Retrieve a `NamedMetadataNode` with the given name, creating a new node if no such node exists.
+    #[must_use]
+    pub fn get_or_insert_named_metadata(&self, name: &str) -> NamedMetadataNodeRef {
+        let c_name = CString::from(name);
+        let md = unsafe {
+            LLVMGetOrInsertNamedMetadata(self.0, c_name.as_ptr(), *SizeT(c_name.as_bytes().len()))
+        };
+        md.into()
+    }
+
+    /// Obtain the number of operands for named metadata in a module.
+    #[must_use]
+    pub fn get_named_metadata_num_operands(&self, name: &str) -> u32 {
+        let c_name = CString::from(name);
+        unsafe { LLVMGetNamedMetadataNumOperands(self.0, c_name.as_ptr()) }
+    }
+
+    /// Obtain the named metadata operands for a module.
+    ///
+    /// The passed `ValueRef` pointer should refer to an array of
+    /// `ValueRef` at least `get_names_metadata_operands` long. This
+    /// array will be populated with the `ValueRef` instances. Each
+    /// instance corresponds to a Metadata Node.
+    #[must_use]
+    pub fn get_named_metadata_operands(&self, name: &str) -> Vec<ValueRef> {
+        let c_name = CString::from(name);
+        let num_operands = self.get_named_metadata_num_operands(name);
+        let mut raw_operands: Vec<LLVMValueRef> = Vec::with_capacity(num_operands as usize);
+        unsafe {
+            LLVMGetNamedMetadataOperands(self.0, c_name.as_ptr(), raw_operands.as_mut_ptr());
+            raw_operands.set_len(num_operands as usize);
+        }
+        raw_operands.into_iter().map(ValueRef::from).collect()
+    }
+
+    /// Add an operand to named metadata.
+    pub fn add_named_metadata_operand(&self, name: &str, val: &ValueRef) {
+        let c_name = CString::from(name);
+        unsafe { LLVMAddNamedMetadataOperand(self.0, c_name.as_ptr(), val.get_ref()) };
+    }
 }
 
 /// Get the template string used for an inline assembly snippet.
@@ -437,59 +592,43 @@ pub fn get_inline_asm(
     ValueRef::from(value_ref)
 }
 
-/*
-
 /// Get the raw constraint string for an inline assembly snippet.
-    pub fn get_inline_asm_constraint_string(&self, inline_asm_val: LLVMValueRef) -> Option<String> {
-        unsafe {
-            let mut len: usize = 0;
-            let c_str = LLVMGetInlineAsmConstraintString(inline_asm_val, &mut len);
-            if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::from_ptr(c_str).to_string_lossy().into_owned())
-            }
-        }
-    }
+#[must_use]
+pub fn get_inline_asm_constraint_string(inline_asm_val: &ValueRef) -> Option<String> {
+    inline_asm_val.get_inline_asm_constraint_string()
+}
 
-     /// Get the dialect used by the inline asm snippet.
-    pub fn get_inline_asm_dialect(&self, inline_asm_val: LLVMValueRef) -> LLVMInlineAsmDialect {
-        unsafe {
-            LLVMGetInlineAsmDialect(inline_asm_val)
-        }
-    }
+/// Get the dialect used by the inline asm snippet.
+#[must_use]
+pub fn get_inline_asm_dialect(inline_asm_val: &ValueRef) -> InlineAsmDialect {
+    inline_asm_val.get_inline_asm_dialect()
+}
 
-    /// Get the function type of the inline assembly snippet.
-    ///
-    /// This is the same type that was passed into LLVMGetInlineAsm originally.
-    pub fn get_inline_asm_function_type(&self, inline_asm_val: LLVMValueRef) -> LLVMTypeRef {
-        unsafe {
-            LLVMGetInlineAsmFunctionType(inline_asm_val)
-        }
-    }
+/// Get the function type of the inline assembly snippet.
+///
+/// This is the same type that was passed into `LLVMGetInlineAsm` originally.
+#[must_use]
+pub fn get_inline_asm_function_type(inline_asm_val: &ValueRef) -> TypeRef {
+    inline_asm_val.get_inline_asm_function_type()
+}
 
 /// Get if the inline asm snippet has side effects
-    pub fn get_inline_asm_has_side_effects(&self, inline_asm_val: LLVMValueRef) -> bool {
-        unsafe {
-            LLVMGetInlineAsmHasSideEffects(inline_asm_val) != 0
-        }
-    }
+#[must_use]
+pub fn get_inline_asm_has_side_effects(inline_asm_val: &ValueRef) -> bool {
+    inline_asm_val.get_inline_asm_has_side_effects()
+}
 
 /// Get if the inline asm snippet needs an aligned stack
-    pub fn get_inline_asm_needs_aligned_stack(&self, inline_asm_val: LLVMValueRef) -> bool {
-        unsafe {
-            LLVMGetInlineAsmNeedsAlignedStack(inline_asm_val) != 0
-        }
-    }
+#[must_use]
+pub fn get_inline_asm_needs_aligned_stack(inline_asm_val: &ValueRef) -> bool {
+    inline_asm_val.get_inline_asm_needs_aligned_stack()
+}
 
 /// Get if the inline asm snippet may unwind the stack
-    pub fn get_inline_asm_can_unwind(&self, inline_asm_val: LLVMValueRef) -> bool {
-        unsafe {
-            LLVMGetInlineAsmCanUnwind(inline_asm_val) != 0
-        }
-    }
+#[must_use]
+pub fn get_inline_asm_can_unwind(inline_asm_val: &ValueRef) -> bool {
+    inline_asm_val.get_inline_asm_can_unwind()
 }
-*/
 
 impl Deref for ModuleRef {
     type Target = LLVMModuleRef;
