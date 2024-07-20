@@ -630,6 +630,34 @@ pub fn get_inline_asm_can_unwind(inline_asm_val: &ValueRef) -> bool {
     inline_asm_val.get_inline_asm_can_unwind()
 }
 
+/// Return the directory of the debug location for this value, which must be
+/// an LLVM `Instruction`, `GlobalVariable`, or `Function`.
+#[must_use]
+pub fn get_debug_loc_directory(val: &ValueRef) -> Option<String> {
+    val.get_debug_loc_directory()
+}
+
+/// Return the filename of the debug location for this value, which must be
+/// an LLVM `Instruction`, `lGlobalVariable`, or `Function`.
+#[must_use]
+pub fn get_debug_loc_filename(val: &ValueRef) -> Option<String> {
+    val.get_debug_loc_filename()
+}
+
+/// Return the line number of the debug location for this value, which must be
+/// an LLVM `Instruction`, `GlobalVariable`, or `Function`.
+#[must_use]
+pub fn get_debug_loc_line(val: &ValueRef) -> u32 {
+    val.get_debug_loc_line()
+}
+
+/// Return the column number of the debug location for this value, which must be
+/// an LLVM `Instruction`.
+#[must_use]
+pub fn get_debug_loc_column(val: &ValueRef) -> u32 {
+    val.get_debug_loc_column()
+}
+
 impl Deref for ModuleRef {
     type Target = LLVMModuleRef;
     fn deref(&self) -> &Self::Target {

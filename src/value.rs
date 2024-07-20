@@ -2,6 +2,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 use llvm_sys::core::{
+    LLVMGetDebugLocColumn, LLVMGetDebugLocDirectory, LLVMGetDebugLocFilename, LLVMGetDebugLocLine,
     LLVMGetInlineAsmAsmString, LLVMGetInlineAsmCanUnwind, LLVMGetInlineAsmConstraintString,
     LLVMGetInlineAsmDialect, LLVMGetInlineAsmFunctionType, LLVMGetInlineAsmHasSideEffects,
     LLVMGetInlineAsmNeedsAlignedStack, LLVMGetParam, LLVMSetValueName2,
@@ -104,6 +105,50 @@ impl ValueRef {
     #[must_use]
     pub fn get_inline_asm_can_unwind(&self) -> bool {
         unsafe { LLVMGetInlineAsmCanUnwind(self.0) != 0 }
+    }
+
+    /// Return the directory of the debug location for this value, which must be
+    /// an LLVM `Instruction`, `GlobalVariable`, or `Function`.
+    #[must_use]
+    pub fn get_debug_loc_directory(&self) -> Option<String> {
+        unsafe {
+            let mut length = CUint::from(0_usize);
+            let c_str = LLVMGetDebugLocDirectory(self.0, &mut *length);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
+        }
+    }
+
+    /// Return the filename of the debug location for this value, which must be
+    /// an LLVM `Instruction`, `lGlobalVariable`, or `Function`.
+    #[must_use]
+    pub fn get_debug_loc_filename(&self) -> Option<String> {
+        unsafe {
+            let mut length = CUint::from(0_usize);
+            let c_str = LLVMGetDebugLocFilename(self.0, &mut *length);
+            if c_str.is_null() {
+                None
+            } else {
+                Some(CStr::new(c_str).to_string())
+            }
+        }
+    }
+
+    /// Return the line number of the debug location for this value, which must be
+    /// an LLVM `Instruction`, `GlobalVariable`, or `Function`.
+    #[must_use]
+    pub fn get_debug_loc_line(&self) -> u32 {
+        unsafe { LLVMGetDebugLocLine(self.0) }
+    }
+
+    /// Return the column number of the debug location for this value, which must be
+    /// an LLVM `Instruction`.
+    #[must_use]
+    pub fn get_debug_loc_column(&self) -> u32 {
+        unsafe { LLVMGetDebugLocColumn(self.0) }
     }
 }
 

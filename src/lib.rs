@@ -44,6 +44,12 @@ impl Deref for CUint {
     }
 }
 
+impl DerefMut for CUint {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// `c_int` wrapper (from C-type)
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct CInt(c_int);
