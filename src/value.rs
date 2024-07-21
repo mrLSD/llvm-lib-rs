@@ -5,7 +5,8 @@ use llvm_sys::core::{
     LLVMGetDebugLocColumn, LLVMGetDebugLocDirectory, LLVMGetDebugLocFilename, LLVMGetDebugLocLine,
     LLVMGetInlineAsmAsmString, LLVMGetInlineAsmCanUnwind, LLVMGetInlineAsmConstraintString,
     LLVMGetInlineAsmDialect, LLVMGetInlineAsmFunctionType, LLVMGetInlineAsmHasSideEffects,
-    LLVMGetInlineAsmNeedsAlignedStack, LLVMGetParam, LLVMSetValueName2,
+    LLVMGetInlineAsmNeedsAlignedStack, LLVMGetNextFunction, LLVMGetParam, LLVMGetPreviousFunction,
+    LLVMSetValueName2,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -15,6 +16,26 @@ use crate::{CStr, CString, CUint, GetRef, SizeT};
 
 /// LLVM Value wrapper
 pub struct ValueRef(LLVMValueRef);
+
+impl Deref for ValueRef {
+    type Target = LLVMValueRef;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl GetRef for ValueRef {
+    type RawRef = LLVMValueRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
+
+impl From<LLVMValueRef> for ValueRef {
+    fn from(value_ref: LLVMValueRef) -> Self {
+        Self(value_ref)
+    }
+}
 
 impl ValueRef {
     /// Create Value form raw Value reference
@@ -150,24 +171,34 @@ impl ValueRef {
     pub fn get_debug_loc_column(&self) -> u32 {
         unsafe { LLVMGetDebugLocColumn(self.0) }
     }
-}
 
-impl Deref for ValueRef {
-    type Target = LLVMValueRef;
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    /// Advance a `Function` iterator to the next Function.
+    ///
+    /// Returns `None` if the iterator was already at the end and there are no more functions.
+    #[must_use]
+    pub fn get_next_function(&self) -> Option<Self> {
+        unsafe {
+            let next_func = LLVMGetNextFunction(self.0);
+            if next_func.is_null() {
+                None
+            } else {
+                Some(Self(next_func))
+            }
+        }
     }
-}
 
-impl GetRef for ValueRef {
-    type RawRef = LLVMValueRef;
-    fn get_ref(&self) -> Self::RawRef {
-        self.0
-    }
-}
-
-impl From<LLVMValueRef> for ValueRef {
-    fn from(value_ref: LLVMValueRef) -> Self {
-        Self(value_ref)
+    /// Decrement a `Function` iterator to the previous Function.
+    ///
+    /// Returns `None` if the iterator was already at the beginning and there are no previous functions.
+    #[must_use]
+    pub fn get_previous_function(&self) -> Option<Self> {
+        unsafe {
+            let prev_func = LLVMGetPreviousFunction(self.0);
+            if prev_func.is_null() {
+                None
+            } else {
+                Some(Self(prev_func))
+            }
+        }
     }
 }
