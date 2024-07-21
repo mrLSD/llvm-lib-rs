@@ -3,16 +3,17 @@ use std::ops::Deref;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddModuleFlag, LLVMAddNamedMetadataOperand, LLVMAppendModuleInlineAsm,
     LLVMCloneModule, LLVMCopyModuleFlagsMetadata, LLVMDisposeModule,
-    LLVMDisposeModuleFlagsMetadata, LLVMDumpModule, LLVMGetDataLayoutStr,
-    LLVMGetFirstNamedMetadata, LLVMGetInlineAsm, LLVMGetLastNamedMetadata, LLVMGetModuleContext,
-    LLVMGetModuleFlag, LLVMGetModuleIdentifier, LLVMGetModuleInlineAsm, LLVMGetNamedMetadata,
-    LLVMGetNamedMetadataName, LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands,
-    LLVMGetNextNamedMetadata, LLVMGetOrInsertNamedMetadata, LLVMGetPreviousNamedMetadata,
-    LLVMGetSourceFileName, LLVMGetTarget, LLVMModuleCreateWithName,
-    LLVMModuleCreateWithNameInContext, LLVMModuleFlagEntriesGetFlagBehavior,
-    LLVMModuleFlagEntriesGetKey, LLVMModuleFlagEntriesGetMetadata, LLVMPrintModuleToFile,
-    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetModuleInlineAsm2,
-    LLVMSetSourceFileName, LLVMSetTarget,
+    LLVMDisposeModuleFlagsMetadata, LLVMDumpModule, LLVMGetDataLayoutStr, LLVMGetFirstFunction,
+    LLVMGetFirstNamedMetadata, LLVMGetInlineAsm, LLVMGetLastFunction, LLVMGetLastNamedMetadata,
+    LLVMGetModuleContext, LLVMGetModuleFlag, LLVMGetModuleIdentifier, LLVMGetModuleInlineAsm,
+    LLVMGetNamedFunction, LLVMGetNamedMetadata, LLVMGetNamedMetadataName,
+    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetNextNamedMetadata,
+    LLVMGetOrInsertNamedMetadata, LLVMGetPreviousNamedMetadata, LLVMGetSourceFileName,
+    LLVMGetTarget, LLVMModuleCreateWithName, LLVMModuleCreateWithNameInContext,
+    LLVMModuleFlagEntriesGetFlagBehavior, LLVMModuleFlagEntriesGetKey,
+    LLVMModuleFlagEntriesGetMetadata, LLVMPrintModuleToFile, LLVMPrintModuleToString,
+    LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetModuleInlineAsm2, LLVMSetSourceFileName,
+    LLVMSetTarget,
 };
 use llvm_sys::prelude::{
     LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef, LLVMNamedMDNodeRef, LLVMValueRef,
@@ -219,6 +220,29 @@ impl From<ModuleFlagBehavior> for LLVMModuleFlagBehavior {
 
 /// LLVM Module wrapper
 pub struct ModuleRef(LLVMModuleRef);
+
+impl Deref for ModuleRef {
+    type Target = LLVMModuleRef;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for ModuleRef {
+    /// Dispose module
+    fn drop(&mut self) {
+        unsafe {
+            LLVMDisposeModule(self.0);
+        }
+    }
+}
+
+impl GetRef for ModuleRef {
+    type RawRef = LLVMModuleRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
 
 impl ModuleRef {
     /// Create LLVM module with name
@@ -464,15 +488,6 @@ impl ModuleRef {
         }
     }
 
-    /// Set add function value based on Function type
-    #[must_use]
-    pub fn add_function(&self, fn_name: &str, fn_type: &TypeRef) -> ValueRef {
-        unsafe {
-            let c_name = CString::from(fn_name);
-            ValueRef::from(LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
-        }
-    }
-
     /// Obtain the context to which this module is associated.
     #[must_use]
     pub fn get_module_context(&self) -> ContextRef {
@@ -554,6 +569,36 @@ impl ModuleRef {
     pub fn add_named_metadata_operand(&self, name: &str, val: &ValueRef) {
         let c_name = CString::from(name);
         unsafe { LLVMAddNamedMetadataOperand(self.0, c_name.as_ptr(), val.get_ref()) };
+    }
+
+    /// Set add function value based on Function type
+    #[must_use]
+    pub fn add_function(&self, fn_name: &str, fn_type: &TypeRef) -> ValueRef {
+        unsafe {
+            let c_name = CString::from(fn_name);
+            ValueRef::from(LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
+        }
+    }
+
+    /// Obtain a Function value from a `Module` by its name.
+    ///
+    /// The returned value corresponds to a `Function` value.
+    #[must_use]
+    pub fn get_named_function(&self, name: &str) -> ValueRef {
+        let c_name = CString::from(name);
+        ValueRef::from(unsafe { LLVMGetNamedFunction(self.0, c_name.as_ptr()) })
+    }
+
+    /// Obtain an iterator to the first Function in a Module.
+    #[must_use]
+    pub fn get_first_function(&self) -> ValueRef {
+        ValueRef::from(unsafe { LLVMGetFirstFunction(self.0) })
+    }
+
+    /// Obtain an iterator to the last Function in a Module.
+    #[must_use]
+    pub fn get_last_function(&self) -> ValueRef {
+        ValueRef::from(unsafe { LLVMGetLastFunction(self.0) })
     }
 }
 
@@ -658,25 +703,18 @@ pub fn get_debug_loc_column(val: &ValueRef) -> u32 {
     val.get_debug_loc_column()
 }
 
-impl Deref for ModuleRef {
-    type Target = LLVMModuleRef;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+/// Advance a Function iterator to the next Function.
+///
+/// Returns `None` if the iterator was already at the end and there are no more functions.
+#[must_use]
+pub fn get_next_function(func: &ValueRef) -> Option<ValueRef> {
+    func.get_next_function()
 }
 
-impl Drop for ModuleRef {
-    /// Dispose module
-    fn drop(&mut self) {
-        unsafe {
-            LLVMDisposeModule(self.0);
-        }
-    }
-}
-
-impl GetRef for ModuleRef {
-    type RawRef = LLVMModuleRef;
-    fn get_ref(&self) -> Self::RawRef {
-        self.0
-    }
+/// Decrement a `Function` iterator to the previous Function.
+///
+/// Returns `None` if the iterator was already at the beginning and there are no previous functions.
+#[must_use]
+pub fn get_previous_function(func: &ValueRef) -> Option<ValueRef> {
+    func.get_previous_function()
 }
