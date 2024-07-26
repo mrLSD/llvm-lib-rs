@@ -1,9 +1,28 @@
-use crate::types::{DiagnosticSeverity, TypeRef};
+use crate::core::types::TypeRef;
 use crate::{CInt, CStr, CString, CUint, GetRef, SizeT, UnsafeMutVoidPtr};
-use llvm_sys::core;
 use llvm_sys::prelude::{LLVMAttributeRef, LLVMContextRef, LLVMDiagnosticInfoRef};
-use llvm_sys::{LLVMDiagnosticHandler, LLVMYieldCallback};
+use llvm_sys::{core, LLVMDiagnosticHandler, LLVMDiagnosticSeverity, LLVMYieldCallback};
 use std::ops::Deref;
+
+/// Wrapper for `LLVMDiagnosticSeverity`
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DiagnosticSeverity {
+    DSError,
+    DSWarning,
+    DSRemark,
+    DSNote,
+}
+
+impl From<LLVMDiagnosticSeverity> for DiagnosticSeverity {
+    fn from(severity: LLVMDiagnosticSeverity) -> Self {
+        match severity {
+            LLVMDiagnosticSeverity::LLVMDSError => Self::DSError,
+            LLVMDiagnosticSeverity::LLVMDSWarning => Self::DSWarning,
+            LLVMDiagnosticSeverity::LLVMDSRemark => Self::DSRemark,
+            LLVMDiagnosticSeverity::LLVMDSNote => Self::DSNote,
+        }
+    }
+}
 
 /// LLVM Context wrapper
 pub struct ContextRef(LLVMContextRef);

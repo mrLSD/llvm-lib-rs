@@ -2,11 +2,7 @@
 #![allow(clippy::module_name_repetitions, clippy::new_without_default)]
 pub mod basic_block;
 pub mod builder;
-pub mod context;
 pub mod core;
-pub mod module;
-pub mod types;
-pub mod value;
 
 use libc::{c_char, c_int, c_uint, size_t};
 use std::ops::{Deref, DerefMut};
@@ -27,6 +23,12 @@ impl From<u32> for CUint {
     fn from(value: u32) -> Self {
         // Force to unwrap c_uint
         Self(c_uint::try_from(value).expect("c_unit casting fail from u32"))
+    }
+}
+
+impl From<CUint> for u32 {
+    fn from(value: CUint) -> Self {
+        value.0
     }
 }
 

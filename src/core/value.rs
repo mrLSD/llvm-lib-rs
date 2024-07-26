@@ -10,8 +10,8 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
-use crate::module::InlineAsmDialect;
-use crate::types::TypeRef;
+use crate::core::module::InlineAsmDialect;
+use crate::core::types::TypeRef;
 use crate::{CStr, CString, CUint, GetRef, SizeT};
 
 /// LLVM Value wrapper

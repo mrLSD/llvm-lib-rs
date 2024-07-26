@@ -29,7 +29,7 @@ underlying security vulnerabilities.
 
 ## Flexibility
 
-Flexibility is another core attribute of the llvm-lib-rs`. The library provides a rich set of APIs that cover a wide
+Flexibility is another core attribute of the `llvm-lib-rs`. The library provides a rich set of APIs that cover a wide
 range of LLVM’s capabilities, from module management and inline assembly to debugging metadata and function iteration.
 Developers can easily access and manipulate **LLVM** constructs, enabling the creation of highly customized and
 optimized
@@ -38,7 +38,7 @@ ideal choice for a diverse set of compiler development projects.
 
 ## Extendability
 
-The 'llvm-lib-rs' is built with extendability in mind. It is designed to be easily extendable, allowing developers to
+The `llvm-lib-rs` is built with extendability in mind. It is designed to be easily extendable, allowing developers to
 add
 new functionalities and support for additional **LLVM** features as needed. The modular structure of the library
 facilitates
@@ -57,12 +57,13 @@ efficient and portable compilers that meet the demands of today’s diverse comp
 
 ## Design
 
-The llvm-lib-rs library adheres to the structure of the LLVM C API, ensuring easy navigation through the extensive LLVM
+The `llvm-lib-rs` library adheres to the structure of the LLVM C API, ensuring easy navigation through the extensive
+LLVM
 functions. Logical elements are grouped into modules, providing a clear organizational structure. Within these modules,
 Rust structures are introduced to wrap LLVM types, implementing corresponding functions for the wrapped LLVM types. This
 approach enhances flexibility and usability while maintaining the original LLVM code structure. The design avoids
 unnecessary complexity in the code and documentation, remaining fully aligned with the LLVM API. This alignment allows
-developers to easily navigate the llvm-lib-rs library using existing LLVM-C documentation.
+developers to easily navigate the `llvm-lib-rs` library using existing LLVM-C documentation.
 
 ### Safety Considerations
 
@@ -79,7 +80,7 @@ Based on [llvm-sys](https://crates.io/crates/llvm-sys) rust crate.
 
 Support LLVM:
 
--[x] llvm-18
+- [x] llvm-18
 
 Development in progress and API suppose to be unstable before completion.
 

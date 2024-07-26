@@ -6,31 +6,10 @@ use llvm_sys::core::{
     LLVMInt8TypeInContext, LLVMPointerType, LLVMVoidTypeInContext,
 };
 use llvm_sys::prelude::LLVMTypeRef;
-use llvm_sys::LLVMDiagnosticSeverity;
 
-use crate::context::ContextRef;
+use crate::core::context::ContextRef;
 use crate::CUint;
 use crate::GetRef;
-
-/// Wrapper for `LLVMDiagnosticSeverity`
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DiagnosticSeverity {
-    DSError,
-    DSWarning,
-    DSRemark,
-    DSNote,
-}
-
-impl From<LLVMDiagnosticSeverity> for DiagnosticSeverity {
-    fn from(severity: LLVMDiagnosticSeverity) -> Self {
-        match severity {
-            LLVMDiagnosticSeverity::LLVMDSError => Self::DSError,
-            LLVMDiagnosticSeverity::LLVMDSWarning => Self::DSWarning,
-            LLVMDiagnosticSeverity::LLVMDSRemark => Self::DSRemark,
-            LLVMDiagnosticSeverity::LLVMDSNote => Self::DSNote,
-        }
-    }
-}
 
 /// LLVM Type structure wrapper
 pub struct TypeRef(LLVMTypeRef);

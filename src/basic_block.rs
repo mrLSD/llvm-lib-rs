@@ -1,5 +1,5 @@
-use super::context::ContextRef;
-use super::value::ValueRef;
+use crate::core::context::ContextRef;
+use crate::core::value::ValueRef;
 use crate::CString;
 use llvm_sys::core::LLVMAppendBasicBlockInContext;
 use llvm_sys::prelude::LLVMBasicBlockRef;

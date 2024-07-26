@@ -1,28 +1,14 @@
 use std::ops::Deref;
 
-use llvm_sys::core::{
-    LLVMAddFunction, LLVMAddModuleFlag, LLVMAddNamedMetadataOperand, LLVMAppendModuleInlineAsm,
-    LLVMCloneModule, LLVMCopyModuleFlagsMetadata, LLVMDisposeModule,
-    LLVMDisposeModuleFlagsMetadata, LLVMDumpModule, LLVMGetDataLayoutStr, LLVMGetFirstFunction,
-    LLVMGetFirstNamedMetadata, LLVMGetInlineAsm, LLVMGetLastFunction, LLVMGetLastNamedMetadata,
-    LLVMGetModuleContext, LLVMGetModuleFlag, LLVMGetModuleIdentifier, LLVMGetModuleInlineAsm,
-    LLVMGetNamedFunction, LLVMGetNamedMetadata, LLVMGetNamedMetadataName,
-    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetNextNamedMetadata,
-    LLVMGetOrInsertNamedMetadata, LLVMGetPreviousNamedMetadata, LLVMGetSourceFileName,
-    LLVMGetTarget, LLVMModuleCreateWithName, LLVMModuleCreateWithNameInContext,
-    LLVMModuleFlagEntriesGetFlagBehavior, LLVMModuleFlagEntriesGetKey,
-    LLVMModuleFlagEntriesGetMetadata, LLVMPrintModuleToFile, LLVMPrintModuleToString,
-    LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetModuleInlineAsm2, LLVMSetSourceFileName,
-    LLVMSetTarget,
-};
+use llvm_sys::core;
 use llvm_sys::prelude::{
     LLVMMetadataRef, LLVMModuleFlagEntry, LLVMModuleRef, LLVMNamedMDNodeRef, LLVMValueRef,
 };
 use llvm_sys::{LLVMInlineAsmDialect, LLVMModuleFlagBehavior};
 
-use crate::context::ContextRef;
-use crate::types::TypeRef;
-use crate::value::ValueRef;
+use crate::core::context::ContextRef;
+use crate::core::types::TypeRef;
+use crate::core::value::ValueRef;
 use crate::{CInt, CStr, CString, GetRef, SizeT};
 
 /// Inline Asm Dialect
@@ -70,7 +56,7 @@ impl NamedMetadataNodeRef {
     /// named metadata nodes.
     #[must_use]
     pub fn get_next(&self) -> Option<Self> {
-        let next_md = unsafe { LLVMGetNextNamedMetadata(self.0) };
+        let next_md = unsafe { core::LLVMGetNextNamedMetadata(self.0) };
         if next_md.is_null() {
             None
         } else {
@@ -84,7 +70,7 @@ impl NamedMetadataNodeRef {
     /// no previously named metadata nodes.
     #[must_use]
     pub fn get_previous(&self) -> Option<Self> {
-        let prev_md = unsafe { LLVMGetPreviousNamedMetadata(self.0) };
+        let prev_md = unsafe { core::LLVMGetPreviousNamedMetadata(self.0) };
         if prev_md.is_null() {
             None
         } else {
@@ -97,7 +83,7 @@ impl NamedMetadataNodeRef {
     pub fn get_name(&self) -> Option<String> {
         let mut length = SizeT::from(0_usize);
         unsafe {
-            let c_str = LLVMGetNamedMetadataName(self.0, &mut *length);
+            let c_str = core::LLVMGetNamedMetadataName(self.0, &mut *length);
             if c_str.is_null() {
                 None
             } else {
@@ -126,14 +112,14 @@ impl ModuleFlagEntry {
     /// Destroys module flags metadata entries.
     pub fn dispose_module_flags_metadata(&self) {
         unsafe {
-            LLVMDisposeModuleFlagsMetadata(self.0);
+            core::LLVMDisposeModuleFlagsMetadata(self.0);
         }
     }
 
     /// Returns the flag behavior for a module flag entry at a specific index.
     #[must_use]
     pub fn get_flag_behavior(&self, index: u32) -> ModuleFlagBehavior {
-        let behavior = unsafe { LLVMModuleFlagEntriesGetFlagBehavior(self.0, index) };
+        let behavior = unsafe { core::LLVMModuleFlagEntriesGetFlagBehavior(self.0, index) };
         behavior.into()
     }
 
@@ -142,7 +128,7 @@ impl ModuleFlagEntry {
     pub fn get_key(&self, index: u32) -> Option<String> {
         unsafe {
             let mut length: usize = 0;
-            let c_str = LLVMModuleFlagEntriesGetKey(self.0, index, &mut length);
+            let c_str = core::LLVMModuleFlagEntriesGetKey(self.0, index, &mut length);
             if c_str.is_null() {
                 None
             } else {
@@ -154,7 +140,7 @@ impl ModuleFlagEntry {
     /// Returns the metadata for a module flag entry at a specific index.
     #[must_use]
     pub fn get_metadata(&self, index: u32) -> MetadataRef {
-        let metadata = unsafe { LLVMModuleFlagEntriesGetMetadata(self.0, index) };
+        let metadata = unsafe { core::LLVMModuleFlagEntriesGetMetadata(self.0, index) };
         MetadataRef(metadata)
     }
 }
@@ -232,7 +218,7 @@ impl Drop for ModuleRef {
     /// Dispose module
     fn drop(&mut self) {
         unsafe {
-            LLVMDisposeModule(self.0);
+            core::LLVMDisposeModule(self.0);
         }
     }
 }
@@ -259,7 +245,7 @@ impl ModuleRef {
     #[must_use]
     pub fn create_module_with_name(module_name: &str) -> Self {
         let c_name = CString::from(module_name);
-        let module_ref = unsafe { LLVMModuleCreateWithName(c_name.as_ptr()) };
+        let module_ref = unsafe { core::LLVMModuleCreateWithName(c_name.as_ptr()) };
         // Force panic as it's unexpected situation
         assert!(!module_ref.is_null(), "Failed to create LLVM module");
         Self(module_ref)
@@ -271,7 +257,7 @@ impl ModuleRef {
     pub fn create_module_with_name_in_context(module_name: &str, context: &ContextRef) -> Self {
         let c_name = CString::from(module_name);
         let module_ref =
-            unsafe { LLVMModuleCreateWithNameInContext(c_name.as_ptr(), context.get_ref()) };
+            unsafe { core::LLVMModuleCreateWithNameInContext(c_name.as_ptr(), context.get_ref()) };
         // Force panic as it's unexpected situation
         assert!(!module_ref.is_null(), "Failed to create LLVM module");
         Self(module_ref)
@@ -280,7 +266,7 @@ impl ModuleRef {
     /// Return an exact copy of the current module.
     #[must_use]
     pub fn clone_module(&self) -> Self {
-        let module_ref = unsafe { LLVMCloneModule(self.0) };
+        let module_ref = unsafe { core::LLVMCloneModule(self.0) };
         Self(module_ref)
     }
 
@@ -289,7 +275,7 @@ impl ModuleRef {
     pub fn get_module_identifier(&self) -> Option<String> {
         let mut length = *SizeT::from(0_usize);
         unsafe {
-            let c_str = LLVMGetModuleIdentifier(self.0, &mut length);
+            let c_str = core::LLVMGetModuleIdentifier(self.0, &mut length);
             if c_str.is_null() {
                 None
             } else {
@@ -302,7 +288,7 @@ impl ModuleRef {
     pub fn set_module_identifier(&self, ident: &str) {
         let c_ident = CString::from(ident);
         unsafe {
-            LLVMSetModuleIdentifier(
+            core::LLVMSetModuleIdentifier(
                 self.0,
                 c_ident.as_ptr(),
                 *SizeT::from(c_ident.to_bytes().len()),
@@ -315,7 +301,7 @@ impl ModuleRef {
     pub fn get_source_file_name(&self) -> Option<String> {
         let mut length = *SizeT::from(0_usize);
         unsafe {
-            let c_str = LLVMGetSourceFileName(self.0, &mut length);
+            let c_str = core::LLVMGetSourceFileName(self.0, &mut length);
             if c_str.is_null() {
                 None
             } else {
@@ -328,7 +314,7 @@ impl ModuleRef {
     pub fn set_source_file_name(&self, name: &str) {
         let c_name = CString::from(name);
         unsafe {
-            LLVMSetSourceFileName(
+            core::LLVMSetSourceFileName(
                 self.0,
                 c_name.as_ptr(),
                 *SizeT::from(c_name.to_bytes().len()),
@@ -340,7 +326,7 @@ impl ModuleRef {
     #[must_use]
     pub fn get_data_layout_str(&self) -> Option<String> {
         unsafe {
-            let c_str = LLVMGetDataLayoutStr(self.0);
+            let c_str = core::LLVMGetDataLayoutStr(self.0);
             if c_str.is_null() {
                 None
             } else {
@@ -353,7 +339,7 @@ impl ModuleRef {
     pub fn set_data_layout(&self, data_layout_str: &str) {
         let c_data_layout_str = CString::from(data_layout_str);
         unsafe {
-            LLVMSetDataLayout(self.0, c_data_layout_str.as_ptr());
+            core::LLVMSetDataLayout(self.0, c_data_layout_str.as_ptr());
         }
     }
 
@@ -361,7 +347,7 @@ impl ModuleRef {
     #[must_use]
     pub fn get_target(&self) -> Option<String> {
         unsafe {
-            let c_str = LLVMGetTarget(self.0);
+            let c_str = core::LLVMGetTarget(self.0);
             if c_str.is_null() {
                 None
             } else {
@@ -374,7 +360,7 @@ impl ModuleRef {
     pub fn set_target(&self, triple: &str) {
         let c_triple = CString::from(triple);
         unsafe {
-            LLVMSetTarget(self.0, c_triple.as_ptr());
+            core::LLVMSetTarget(self.0, c_triple.as_ptr());
         }
     }
 
@@ -384,7 +370,7 @@ impl ModuleRef {
     pub fn copy_module_flags_metadata(&self) -> Option<ModuleFlagEntry> {
         unsafe {
             let mut length = SizeT(0_usize);
-            let entries = LLVMCopyModuleFlagsMetadata(self.0, &mut *length);
+            let entries = core::LLVMCopyModuleFlagsMetadata(self.0, &mut *length);
             if entries.is_null() {
                 None
             } else {
@@ -397,15 +383,16 @@ impl ModuleRef {
     #[must_use]
     pub fn get_module_flag(&self, key: &str) -> MetadataRef {
         let c_key = CString::from(key);
-        let metadata =
-            unsafe { LLVMGetModuleFlag(self.0, c_key.as_ptr(), *SizeT(c_key.to_bytes().len())) };
+        let metadata = unsafe {
+            core::LLVMGetModuleFlag(self.0, c_key.as_ptr(), *SizeT(c_key.to_bytes().len()))
+        };
         MetadataRef(metadata)
     }
 
     pub fn add_module_flag(&self, behavior: &ModuleFlagBehavior, key: &str, val: &MetadataRef) {
         let c_key = CString::from(key);
         unsafe {
-            LLVMAddModuleFlag(
+            core::LLVMAddModuleFlag(
                 self.0,
                 (*behavior).into(),
                 c_key.as_ptr(),
@@ -418,7 +405,7 @@ impl ModuleRef {
     /// Dump module to stdout
     pub fn dump_module(&self) {
         unsafe {
-            LLVMDumpModule(self.0);
+            core::LLVMDumpModule(self.0);
         }
     }
 
@@ -431,7 +418,7 @@ impl ModuleRef {
         let c_filename = CString::from(filename);
         let mut error_message: *mut std::ffi::c_char = std::ptr::null_mut();
         let result =
-            unsafe { LLVMPrintModuleToFile(self.0, c_filename.as_ptr(), &mut error_message) };
+            unsafe { core::LLVMPrintModuleToFile(self.0, c_filename.as_ptr(), &mut error_message) };
         if result == 0 {
             Ok(())
         } else {
@@ -447,7 +434,7 @@ impl ModuleRef {
     #[must_use]
     pub fn print_module_to_string(&self) -> Option<String> {
         unsafe {
-            let c_str = LLVMPrintModuleToString(self.0);
+            let c_str = core::LLVMPrintModuleToString(self.0);
             if c_str.is_null() {
                 None
             } else {
@@ -463,7 +450,7 @@ impl ModuleRef {
     pub fn get_module_inline_asm(&self) -> Option<String> {
         unsafe {
             let mut len = SizeT::from(0_usize);
-            let c_str = LLVMGetModuleInlineAsm(self.0, &mut *len);
+            let c_str = core::LLVMGetModuleInlineAsm(self.0, &mut *len);
             if c_str.is_null() {
                 None
             } else {
@@ -476,7 +463,7 @@ impl ModuleRef {
     pub fn set_module_inline_asm(&self, asm: &str) {
         let c_asm = CString::from(asm);
         unsafe {
-            LLVMSetModuleInlineAsm2(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+            core::LLVMSetModuleInlineAsm2(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
         }
     }
 
@@ -484,20 +471,20 @@ impl ModuleRef {
     pub fn append_module_inline_asm(&self, asm: &str) {
         let c_asm = CString::from(asm);
         unsafe {
-            LLVMAppendModuleInlineAsm(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+            core::LLVMAppendModuleInlineAsm(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
         }
     }
 
     /// Obtain the context to which this module is associated.
     #[must_use]
     pub fn get_module_context(&self) -> ContextRef {
-        ContextRef::from(unsafe { LLVMGetModuleContext(self.0) })
+        ContextRef::from(unsafe { core::LLVMGetModuleContext(self.0) })
     }
 
     /// Obtain an iterator to the first `NamedMDNode` in a `Module`.
     #[must_use]
     pub fn get_first_named_metadata(&self) -> Option<NamedMetadataNodeRef> {
-        let md = unsafe { LLVMGetFirstNamedMetadata(self.0) };
+        let md = unsafe { core::LLVMGetFirstNamedMetadata(self.0) };
         if md.is_null() {
             None
         } else {
@@ -508,7 +495,7 @@ impl ModuleRef {
     /// Obtain an iterator to the last `NamedMDNode` in a Module.
     #[must_use]
     pub fn get_last_named_metadata(&self) -> Option<NamedMetadataNodeRef> {
-        let md = unsafe { LLVMGetLastNamedMetadata(self.0) };
+        let md = unsafe { core::LLVMGetLastNamedMetadata(self.0) };
         if md.is_null() {
             None
         } else {
@@ -521,7 +508,7 @@ impl ModuleRef {
     pub fn get_named_metadata(&self, name: &str) -> Option<NamedMetadataNodeRef> {
         let c_name = CString::from(name);
         let md = unsafe {
-            LLVMGetNamedMetadata(self.0, c_name.as_ptr(), *SizeT(c_name.as_bytes().len()))
+            core::LLVMGetNamedMetadata(self.0, c_name.as_ptr(), *SizeT(c_name.as_bytes().len()))
         };
         if md.is_null() {
             None
@@ -535,7 +522,11 @@ impl ModuleRef {
     pub fn get_or_insert_named_metadata(&self, name: &str) -> NamedMetadataNodeRef {
         let c_name = CString::from(name);
         let md = unsafe {
-            LLVMGetOrInsertNamedMetadata(self.0, c_name.as_ptr(), *SizeT(c_name.as_bytes().len()))
+            core::LLVMGetOrInsertNamedMetadata(
+                self.0,
+                c_name.as_ptr(),
+                *SizeT(c_name.as_bytes().len()),
+            )
         };
         md.into()
     }
@@ -544,7 +535,7 @@ impl ModuleRef {
     #[must_use]
     pub fn get_named_metadata_num_operands(&self, name: &str) -> u32 {
         let c_name = CString::from(name);
-        unsafe { LLVMGetNamedMetadataNumOperands(self.0, c_name.as_ptr()) }
+        unsafe { core::LLVMGetNamedMetadataNumOperands(self.0, c_name.as_ptr()) }
     }
 
     /// Obtain the named metadata operands for a module.
@@ -559,7 +550,7 @@ impl ModuleRef {
         let num_operands = self.get_named_metadata_num_operands(name);
         let mut raw_operands: Vec<LLVMValueRef> = Vec::with_capacity(num_operands as usize);
         unsafe {
-            LLVMGetNamedMetadataOperands(self.0, c_name.as_ptr(), raw_operands.as_mut_ptr());
+            core::LLVMGetNamedMetadataOperands(self.0, c_name.as_ptr(), raw_operands.as_mut_ptr());
             raw_operands.set_len(num_operands as usize);
         }
         raw_operands.into_iter().map(ValueRef::from).collect()
@@ -568,7 +559,7 @@ impl ModuleRef {
     /// Add an operand to named metadata.
     pub fn add_named_metadata_operand(&self, name: &str, val: &ValueRef) {
         let c_name = CString::from(name);
-        unsafe { LLVMAddNamedMetadataOperand(self.0, c_name.as_ptr(), val.get_ref()) };
+        unsafe { core::LLVMAddNamedMetadataOperand(self.0, c_name.as_ptr(), val.get_ref()) };
     }
 
     /// Set add function value based on Function type
@@ -576,7 +567,7 @@ impl ModuleRef {
     pub fn add_function(&self, fn_name: &str, fn_type: &TypeRef) -> ValueRef {
         unsafe {
             let c_name = CString::from(fn_name);
-            ValueRef::from(LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
+            ValueRef::from(core::LLVMAddFunction(self.0, c_name.as_ptr(), **fn_type))
         }
     }
 
@@ -586,19 +577,19 @@ impl ModuleRef {
     #[must_use]
     pub fn get_named_function(&self, name: &str) -> ValueRef {
         let c_name = CString::from(name);
-        ValueRef::from(unsafe { LLVMGetNamedFunction(self.0, c_name.as_ptr()) })
+        ValueRef::from(unsafe { core::LLVMGetNamedFunction(self.0, c_name.as_ptr()) })
     }
 
     /// Obtain an iterator to the first Function in a Module.
     #[must_use]
     pub fn get_first_function(&self) -> ValueRef {
-        ValueRef::from(unsafe { LLVMGetFirstFunction(self.0) })
+        ValueRef::from(unsafe { core::LLVMGetFirstFunction(self.0) })
     }
 
     /// Obtain an iterator to the last Function in a Module.
     #[must_use]
     pub fn get_last_function(&self) -> ValueRef {
-        ValueRef::from(unsafe { LLVMGetLastFunction(self.0) })
+        ValueRef::from(unsafe { core::LLVMGetLastFunction(self.0) })
     }
 }
 
@@ -622,7 +613,7 @@ pub fn get_inline_asm(
     let c_asm_string = CString::from(asm_string);
     let c_constraints = CString::from(constraints);
     let value_ref = unsafe {
-        LLVMGetInlineAsm(
+        core::LLVMGetInlineAsm(
             ty.get_ref(),
             c_asm_string.as_ptr(),
             *SizeT(c_asm_string.to_bytes().len()),
