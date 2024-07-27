@@ -1,8 +1,11 @@
+//! Functions in this section operate on integer types.
+
 use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
 use crate::GetRef;
 use llvm_sys::core;
 
+/// Obtain an integer type from a context with specified bit width.
 impl TypeRef {
     #[must_use]
     pub fn int1_type_in_context(context: &ContextRef) -> Self {
@@ -38,7 +41,10 @@ impl TypeRef {
     pub fn int_type_in_context(context: &ContextRef, num_bits: u32) -> Self {
         unsafe { Self(core::LLVMIntTypeInContext(context.get_ref(), num_bits)) }
     }
+}
 
+/// Obtain an integer type from the global context with a specified bit width.
+impl TypeRef {
     #[must_use]
     pub fn int1_type() -> Self {
         unsafe { Self(core::LLVMInt1Type()) }

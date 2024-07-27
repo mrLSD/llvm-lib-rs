@@ -1,4 +1,5 @@
-mod int;
+pub mod float;
+pub mod int;
 
 use std::ops::Deref;
 
