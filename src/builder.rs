@@ -1,6 +1,6 @@
 use super::basic_block::BasicBlockRef;
-use super::context::ContextRef;
-use super::value::ValueRef;
+use crate::core::context::ContextRef;
+use crate::core::value::ValueRef;
 use llvm_sys::core::{
     LLVMBuildRetVoid, LLVMCreateBuilderInContext, LLVMDisposeBuilder, LLVMPositionBuilderAtEnd,
 };
