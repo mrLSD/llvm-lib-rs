@@ -1,5 +1,9 @@
 #![deny(clippy::nursery, clippy::pedantic)]
-#![allow(clippy::module_name_repetitions, clippy::new_without_default)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::new_without_default,
+    clippy::doc_lazy_continuation
+)]
 pub mod basic_block;
 pub mod builder;
 pub mod core;
