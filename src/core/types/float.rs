@@ -2,8 +2,26 @@ use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
 use crate::GetRef;
 use llvm_sys::core;
+use llvm_sys::prelude::LLVMTypeRef;
 
-impl TypeRef {
+/// Wrapper `LLVMTypeRef` for floating point types.
+#[derive(Debug)]
+pub struct FloatTypeRef(LLVMTypeRef);
+
+impl From<LLVMTypeRef> for FloatTypeRef {
+    fn from(value: LLVMTypeRef) -> Self {
+        Self(value)
+    }
+}
+
+impl GetRef for FloatTypeRef {
+    type RawRef = LLVMTypeRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
+
+impl FloatTypeRef {
     /// Obtain a 16-bit floating point type from a context.
     #[must_use]
     pub fn half_type_in_context(context: &ContextRef) -> Self {

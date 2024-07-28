@@ -4,9 +4,27 @@ use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
 use crate::GetRef;
 use llvm_sys::core;
+use llvm_sys::prelude::LLVMTypeRef;
+
+/// Wrapper `LLVMTypeRef` for integer types.
+#[derive(Debug)]
+pub struct IntTypeRef(LLVMTypeRef);
+
+impl From<LLVMTypeRef> for IntTypeRef {
+    fn from(value: LLVMTypeRef) -> Self {
+        Self(value)
+    }
+}
+
+impl GetRef for IntTypeRef {
+    type RawRef = LLVMTypeRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
 
 /// Obtain an integer type from a context with specified bit width.
-impl TypeRef {
+impl IntTypeRef {
     #[must_use]
     pub fn int1_type_in_context(context: &ContextRef) -> Self {
         unsafe { Self(core::LLVMInt1TypeInContext(context.get_ref())) }

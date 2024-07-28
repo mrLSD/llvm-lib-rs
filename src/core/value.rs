@@ -1,13 +1,7 @@
 use std::ops::Deref;
 use std::rc::Rc;
 
-use llvm_sys::core::{
-    LLVMGetDebugLocColumn, LLVMGetDebugLocDirectory, LLVMGetDebugLocFilename, LLVMGetDebugLocLine,
-    LLVMGetInlineAsmAsmString, LLVMGetInlineAsmCanUnwind, LLVMGetInlineAsmConstraintString,
-    LLVMGetInlineAsmDialect, LLVMGetInlineAsmFunctionType, LLVMGetInlineAsmHasSideEffects,
-    LLVMGetInlineAsmNeedsAlignedStack, LLVMGetNextFunction, LLVMGetParam, LLVMGetPreviousFunction,
-    LLVMSetValueName2,
-};
+use llvm_sys::core;
 use llvm_sys::prelude::LLVMValueRef;
 
 use crate::core::module::InlineAsmDialect;
@@ -15,6 +9,7 @@ use crate::core::types::TypeRef;
 use crate::{CStr, CString, CUint, GetRef, SizeT};
 
 /// LLVM Value wrapper
+#[derive(Debug)]
 pub struct ValueRef(LLVMValueRef);
 
 impl Deref for ValueRef {
@@ -52,14 +47,14 @@ impl ValueRef {
     /// Get function parameter by index
     #[must_use]
     pub fn get_func_param(func_value: &Rc<Self>, index: usize) -> Self {
-        unsafe { Self(LLVMGetParam(***func_value, *CUint::from(index))) }
+        unsafe { Self(core::LLVMGetParam(***func_value, *CUint::from(index))) }
     }
 
     /// Set the string name of a value. By default, in LLVM values monotonic increased
     pub fn set_value_name2(&self, name: &str) {
         unsafe {
             let c_name = CString::from(name);
-            LLVMSetValueName2(
+            core::LLVMSetValueName2(
                 **self,
                 c_name.as_ptr(),
                 *SizeT::from(c_name.to_bytes().len()),
@@ -72,7 +67,7 @@ impl ValueRef {
     pub fn get_inline_asm_asm_string(&self) -> Option<String> {
         unsafe {
             let mut length = SizeT::from(0_usize);
-            let c_str = LLVMGetInlineAsmAsmString(self.0, &mut *length);
+            let c_str = core::LLVMGetInlineAsmAsmString(self.0, &mut *length);
             if c_str.is_null() {
                 None
             } else {
@@ -86,7 +81,7 @@ impl ValueRef {
     pub fn get_inline_asm_constraint_string(&self) -> Option<String> {
         unsafe {
             let mut length = SizeT::from(0_usize);
-            let c_str = LLVMGetInlineAsmConstraintString(self.0, &mut *length);
+            let c_str = core::LLVMGetInlineAsmConstraintString(self.0, &mut *length);
             if c_str.is_null() {
                 None
             } else {
@@ -98,7 +93,7 @@ impl ValueRef {
     /// Get the dialect used by the inline asm snippet.
     #[must_use]
     pub fn get_inline_asm_dialect(&self) -> InlineAsmDialect {
-        let inline_asm_dialect = unsafe { LLVMGetInlineAsmDialect(self.0) };
+        let inline_asm_dialect = unsafe { core::LLVMGetInlineAsmDialect(self.0) };
         inline_asm_dialect.into()
     }
 
@@ -107,25 +102,25 @@ impl ValueRef {
     /// This is the same type that was passed into `LLVMGetInlineAsm` originally.
     #[must_use]
     pub fn get_inline_asm_function_type(&self) -> TypeRef {
-        TypeRef::from(unsafe { LLVMGetInlineAsmFunctionType(self.0) })
+        TypeRef::from(unsafe { core::LLVMGetInlineAsmFunctionType(self.0) })
     }
 
     /// Get if the inline asm snippet has side effects
     #[must_use]
     pub fn get_inline_asm_has_side_effects(&self) -> bool {
-        unsafe { LLVMGetInlineAsmHasSideEffects(self.0) != 0 }
+        unsafe { core::LLVMGetInlineAsmHasSideEffects(self.0) != 0 }
     }
 
     /// Get if the inline asm snippet needs an aligned stack
     #[must_use]
     pub fn get_inline_asm_needs_aligned_stack(&self) -> bool {
-        unsafe { LLVMGetInlineAsmNeedsAlignedStack(self.0) != 0 }
+        unsafe { core::LLVMGetInlineAsmNeedsAlignedStack(self.0) != 0 }
     }
 
     /// Get if the inline asm snippet may unwind the stack
     #[must_use]
     pub fn get_inline_asm_can_unwind(&self) -> bool {
-        unsafe { LLVMGetInlineAsmCanUnwind(self.0) != 0 }
+        unsafe { core::LLVMGetInlineAsmCanUnwind(self.0) != 0 }
     }
 
     /// Return the directory of the debug location for this value, which must be
@@ -134,7 +129,7 @@ impl ValueRef {
     pub fn get_debug_loc_directory(&self) -> Option<String> {
         unsafe {
             let mut length = CUint::from(0_usize);
-            let c_str = LLVMGetDebugLocDirectory(self.0, &mut *length);
+            let c_str = core::LLVMGetDebugLocDirectory(self.0, &mut *length);
             if c_str.is_null() {
                 None
             } else {
@@ -149,7 +144,7 @@ impl ValueRef {
     pub fn get_debug_loc_filename(&self) -> Option<String> {
         unsafe {
             let mut length = CUint::from(0_usize);
-            let c_str = LLVMGetDebugLocFilename(self.0, &mut *length);
+            let c_str = core::LLVMGetDebugLocFilename(self.0, &mut *length);
             if c_str.is_null() {
                 None
             } else {
@@ -162,14 +157,14 @@ impl ValueRef {
     /// an LLVM `Instruction`, `GlobalVariable`, or `Function`.
     #[must_use]
     pub fn get_debug_loc_line(&self) -> u32 {
-        unsafe { LLVMGetDebugLocLine(self.0) }
+        unsafe { core::LLVMGetDebugLocLine(self.0) }
     }
 
     /// Return the column number of the debug location for this value, which must be
     /// an LLVM `Instruction`.
     #[must_use]
     pub fn get_debug_loc_column(&self) -> u32 {
-        unsafe { LLVMGetDebugLocColumn(self.0) }
+        unsafe { core::LLVMGetDebugLocColumn(self.0) }
     }
 
     /// Advance a `Function` iterator to the next Function.
@@ -178,7 +173,7 @@ impl ValueRef {
     #[must_use]
     pub fn get_next_function(&self) -> Option<Self> {
         unsafe {
-            let next_func = LLVMGetNextFunction(self.0);
+            let next_func = core::LLVMGetNextFunction(self.0);
             if next_func.is_null() {
                 None
             } else {
@@ -193,7 +188,7 @@ impl ValueRef {
     #[must_use]
     pub fn get_previous_function(&self) -> Option<Self> {
         unsafe {
-            let prev_func = LLVMGetPreviousFunction(self.0);
+            let prev_func = core::LLVMGetPreviousFunction(self.0);
             if prev_func.is_null() {
                 None
             } else {

@@ -25,6 +25,7 @@ impl From<LLVMDiagnosticSeverity> for DiagnosticSeverity {
 }
 
 /// LLVM Context wrapper
+#[derive(Debug)]
 pub struct ContextRef(LLVMContextRef);
 
 impl From<LLVMContextRef> for ContextRef {

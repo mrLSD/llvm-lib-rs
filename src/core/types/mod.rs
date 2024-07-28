@@ -1,5 +1,7 @@
 pub mod float;
+pub mod function;
 pub mod int;
+pub mod structs;
 
 use std::ops::Deref;
 
@@ -98,6 +100,7 @@ impl From<TypeKind> for LLVMTypeKind {
 /// deduplicates types so there is only 1 instance of a specific type
 /// alive at a time. In other words, a unique type is shared among all
 /// consumers within a context.
+#[derive(Debug)]
 pub struct TypeRef(LLVMTypeRef);
 
 impl From<LLVMTypeRef> for TypeRef {
