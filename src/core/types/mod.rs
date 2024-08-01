@@ -1,6 +1,7 @@
 pub mod float;
 pub mod function;
 pub mod int;
+pub mod sequential;
 pub mod structs;
 
 use std::ops::Deref;
