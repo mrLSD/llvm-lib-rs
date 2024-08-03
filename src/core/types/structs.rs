@@ -29,7 +29,7 @@ impl StructTypeRef {
     #[must_use]
     pub fn struct_type_in_context(
         context: &ContextRef,
-        element_types: &[Self],
+        element_types: &[TypeRef],
         packed: bool,
     ) -> Self {
         let mut element_types = element_types.iter().map(|v| v.0).collect::<Vec<_>>();
@@ -50,7 +50,7 @@ impl StructTypeRef {
 
     /// Create a new structure type in the global context.
     #[must_use]
-    pub fn struct_type(element_types: &[Self], packed: bool) -> Self {
+    pub fn struct_type(element_types: &[TypeRef], packed: bool) -> Self {
         let mut element_types = element_types.iter().map(|v| v.0).collect::<Vec<_>>();
         let elements = if element_types.is_empty() {
             std::ptr::null_mut()
