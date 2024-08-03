@@ -1,11 +1,36 @@
 use crate::CUint;
+use libc::c_uint;
 use llvm_sys::core;
 use std::fmt::Display;
+use std::ops::Deref;
 
 pub mod context;
 pub mod module;
 pub mod types;
 pub mod value;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddressSpace(CUint);
+
+impl From<u32> for AddressSpace {
+    fn from(value: u32) -> Self {
+        Self(CUint::from(value))
+    }
+}
+
+impl Deref for AddressSpace {
+    type Target = c_uint;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl AddressSpace {
+    #[must_use]
+    pub const fn new(value: CUint) -> Self {
+        Self(value)
+    }
+}
 
 /// Dispose LLVM message
 /// ## Safety
