@@ -69,10 +69,9 @@ impl ValueRef {
             let mut length = SizeT::from(0_usize);
             let c_str = core::LLVMGetInlineAsmAsmString(self.0, &mut *length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -83,10 +82,9 @@ impl ValueRef {
             let mut length = SizeT::from(0_usize);
             let c_str = core::LLVMGetInlineAsmConstraintString(self.0, &mut *length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -131,10 +129,9 @@ impl ValueRef {
             let mut length = CUint::from(0_usize);
             let c_str = core::LLVMGetDebugLocDirectory(self.0, &mut *length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -146,10 +143,9 @@ impl ValueRef {
             let mut length = CUint::from(0_usize);
             let c_str = core::LLVMGetDebugLocFilename(self.0, &mut *length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 

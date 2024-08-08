@@ -85,10 +85,9 @@ impl NamedMetadataNodeRef {
         unsafe {
             let c_str = core::LLVMGetNamedMetadataName(self.0, &mut *length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 }
@@ -130,10 +129,9 @@ impl ModuleFlagEntry {
             let mut length: usize = 0;
             let c_str = core::LLVMModuleFlagEntriesGetKey(self.0, index, &mut length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -277,10 +275,9 @@ impl ModuleRef {
         unsafe {
             let c_str = core::LLVMGetModuleIdentifier(self.0, &mut length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -303,10 +300,9 @@ impl ModuleRef {
         unsafe {
             let c_str = core::LLVMGetSourceFileName(self.0, &mut length);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -328,10 +324,9 @@ impl ModuleRef {
         unsafe {
             let c_str = core::LLVMGetDataLayoutStr(self.0);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -349,10 +344,9 @@ impl ModuleRef {
         unsafe {
             let c_str = core::LLVMGetTarget(self.0);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 
@@ -436,12 +430,11 @@ impl ModuleRef {
         unsafe {
             let c_str = core::LLVMPrintModuleToString(self.0);
             if c_str.is_null() {
-                None
-            } else {
-                let result = CStr::new(c_str).to_string();
-                crate::core::dispose_message(c_str);
-                Some(result)
+                return None;
             }
+            let result = CStr::new(c_str).to_string();
+            crate::core::dispose_message(c_str);
+            Some(result)
         }
     }
 
@@ -452,10 +445,9 @@ impl ModuleRef {
             let mut len = SizeT::from(0_usize);
             let c_str = core::LLVMGetModuleInlineAsm(self.0, &mut *len);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 

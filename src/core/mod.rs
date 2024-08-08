@@ -8,6 +8,7 @@ pub mod context;
 pub mod module;
 pub mod types;
 pub mod value;
+mod values;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AddressSpace(CUint);
