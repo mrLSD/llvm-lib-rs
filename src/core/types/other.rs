@@ -23,11 +23,13 @@ impl GetRef for VoidTypeRef {
 
 impl VoidTypeRef {
     /// Create a void type in a context.
+    #[must_use]
     pub fn void_type_in_context(context: &ContextRef) -> Self {
         unsafe { Self(core::LLVMVoidTypeInContext(context.get_ref())) }
     }
 
     /// Create a void type in a global context.
+    #[must_use]
     pub fn void_type() -> Self {
         unsafe { Self(core::LLVMVoidType()) }
     }
@@ -52,11 +54,13 @@ impl GetRef for LabelTypeRef {
 
 impl LabelTypeRef {
     /// Create a label type in a context.
+    #[must_use]
     pub fn label_type_in_context(context: &ContextRef) -> Self {
         unsafe { Self(core::LLVMLabelTypeInContext(context.get_ref())) }
     }
 
     /// Create a label type in a global context.
+    #[must_use]
     pub fn label_type() -> TypeRef {
         unsafe { TypeRef(core::LLVMLabelType()) }
     }
@@ -81,11 +85,13 @@ impl GetRef for X86MMXTypeRef {
 
 impl X86MMXTypeRef {
     /// Create an X86 MMX type in a context.
+    #[must_use]
     pub fn x86_mmx_type_in_context(context: &ContextRef) -> TypeRef {
         unsafe { TypeRef(core::LLVMX86MMXTypeInContext(context.get_ref())) }
     }
 
     /// Create a X86 MMX type in a global context.
+    #[must_use]
     pub fn x86_mmx_type() -> TypeRef {
         unsafe { TypeRef(core::LLVMX86MMXType()) }
     }
@@ -110,11 +116,13 @@ impl GetRef for X86AMXTypeRef {
 
 impl X86AMXTypeRef {
     /// Create an X86 AMX type in a context.
+    #[must_use]
     pub fn x86_amx_type_in_context(context: &ContextRef) -> TypeRef {
         unsafe { TypeRef(core::LLVMX86AMXTypeInContext(context.get_ref())) }
     }
 
     /// Create a X86 AMX type in a global context.
+    #[must_use]
     pub fn x86_amx_type() -> TypeRef {
         unsafe { TypeRef(core::LLVMX86AMXType()) }
     }
@@ -139,6 +147,7 @@ impl GetRef for TokenTypeRef {
 
 impl TokenTypeRef {
     /// Create a token type in a context.
+    #[must_use]
     pub fn token_type_in_context(context: &ContextRef) -> TypeRef {
         unsafe { TypeRef(core::LLVMTokenTypeInContext(context.get_ref())) }
     }
@@ -163,6 +172,7 @@ impl GetRef for MetadataTypeRef {
 
 impl MetadataTypeRef {
     /// Create a metadata type in a context.
+    #[must_use]
     pub fn metadata_type_in_context(context: &ContextRef) -> TypeRef {
         unsafe { TypeRef(core::LLVMMetadataTypeInContext(context.get_ref())) }
     }
@@ -187,6 +197,7 @@ impl GetRef for TargetExtTypeRef {
 
 impl TargetExtTypeRef {
     /// Create a target extension type in LLVM context.
+    #[must_use]
     pub fn target_ext_type_in_context(
         context: &ContextRef,
         name: &str,
