@@ -42,8 +42,6 @@ jobs:
       - name: Clippy no-default-features
         run: |
           source /Users/runner/.bash_profile
-          cargo clippy --all --all-targets --no-default-features -- -D warnings
-      - name: Clippy no-default-features
-        run: cargo clippy --all-targets --no-default-features -- -D warnings
-      - name: Clippy
+          cargo clippy --all-targets --no-default-features -- -D warnings
+      - name: Clippy all-features
         run: cargo clippy --all-targets --all-features -- -D warnings

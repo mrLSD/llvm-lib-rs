@@ -1,7 +1,7 @@
 pub mod float;
 pub mod function;
 pub mod int;
-mod other;
+pub mod other;
 pub mod sequential;
 pub mod structs;
 

@@ -84,10 +84,9 @@ impl StructTypeRef {
         unsafe {
             let c_str = core::LLVMGetStructName(self.0);
             if c_str.is_null() {
-                None
-            } else {
-                Some(CStr::new(c_str).to_string())
+                return None;
             }
+            Some(CStr::new(c_str).to_string())
         }
     }
 

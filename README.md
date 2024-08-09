@@ -1,6 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Lints](https://github.com/mrLSD/llvm-lib-rs/actions/workflows/lints.yml/badge.svg)](https://github.com/mrLSD/llvm-lib-rs/actions/workflows/lints.yml)
 [![Crates.io version](https://img.shields.io/crates/v/llvm-lib.svg?style=flat-square)](https://crates.io/crates/llvm-lib)
+[![Crates.io Total Downloads](https://img.shields.io/crates/d/llvm-lib?style=flat-square&label=crates.io%20downloads)](https://crates.io/crates/llvm-lib)
 <!-- [![Tests](https://github.com/mrLSD/z-rose/actions/workflows/tests.yml/badge.svg)](https://github.com/mrLSD/llvm-lib-rs/actions/workflows/tests.yml) -->
 
 <div style="text-align: center;">
@@ -8,7 +9,7 @@
 </div>
 
 LLVM library with safety and flexibility in mind, without over complexity based on `LLVM-C` API
-provided be `llvm-sys` crate.
+(based on `llvm-sys` crate).
 
 ## Overview
 
