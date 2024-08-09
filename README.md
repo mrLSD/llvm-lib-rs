@@ -9,7 +9,7 @@
 </div>
 
 LLVM library with safety and flexibility in mind, without over complexity based on `LLVM-C` API
-provided be `llvm-sys` crate.
+(based on `llvm-sys` crate).
 
 ## Overview
 

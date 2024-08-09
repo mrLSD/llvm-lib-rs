@@ -35,16 +35,19 @@ impl From<LLVMValueRef> for ValueRef {
 
 impl ValueRef {
     /// Obtain the type of a value.
+    #[must_use]
     pub fn type_of(&self) -> TypeRef {
         unsafe { TypeRef::from(core::LLVMTypeOf(self.0)) }
     }
 
     /// Returns the kind of the given LLVM value (Obtain the enumerated type of a Value instance.).
+    #[must_use]
     pub fn get_value_kind(&self) -> ValueKind {
         unsafe { ValueKind::from(core::LLVMGetValueKind(self.0)) }
     }
 
     /// Obtain the string name of a value.
+    #[must_use]
     pub fn get_value_name(&self) -> Option<String> {
         unsafe {
             let mut length = SizeT::from(0);
@@ -71,6 +74,7 @@ impl ValueRef {
 
     /// Return a string representation of the value. Use
     /// `dispose_message` to free the string.
+    #[must_use]
     pub fn print_value_to_string(&self) -> Option<String> {
         unsafe {
             let c_str = core::LLVMPrintValueToString(self.0);
@@ -89,31 +93,37 @@ impl ValueRef {
     }
 
     /// Determines whether the specified value instance is constant.
+    #[must_use]
     pub fn is_constant(&self) -> bool {
         unsafe { core::LLVMIsConstant(self.0) != 0 }
     }
 
     /// Determine whether a value instance is undefined.
+    #[must_use]
     pub fn is_undef(&self) -> bool {
         unsafe { core::LLVMIsUndef(self.0) != 0 }
     }
 
     /// Determine whether a value instance is poisonous.
+    #[must_use]
     pub fn is_poison(&self) -> bool {
         unsafe { core::LLVMIsPoison(self.0) != 0 }
     }
 
     /// Determines whether the specified value instance is an `AMD` node.
+    #[must_use]
     pub fn is_amd_node(&self) -> Self {
         unsafe { Self(core::LLVMIsAMDNode(self.0)) }
     }
 
     /// Determines whether the specified value instance is a value as metadata.
+    #[must_use]
     pub fn is_value_as_metadata(&self) -> Self {
         unsafe { Self(core::LLVMIsAValueAsMetadata(self.0)) }
     }
 
     /// Determines whether the specified value instance is an `AMD` string.
+    #[must_use]
     pub fn is_amd_string(&self) -> Self {
         unsafe { Self(core::LLVMIsAMDString(self.0)) }
     }
