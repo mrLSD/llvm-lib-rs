@@ -1,46 +1,20 @@
 //! Functions in this section work on all `ValueRef` instances,
 //! regardless of their sub-type. They correspond to functions available
-//! on `C llvm::Value` .
+//! on `C LLVM Value`.
 
-use super::ValueKind;
+use super::{ValueKind, ValueRef};
 use crate::core::types::TypeRef;
-use crate::{CStr, CString, GetRef, SizeT};
+use crate::{CStr, CString, SizeT};
 use llvm_sys::core;
-use llvm_sys::prelude::LLVMValueRef;
-use std::ops::Deref;
-
-/// LLVM Value wrapper
-#[derive(Debug)]
-pub struct ValueRef(LLVMValueRef);
-
-impl Deref for ValueRef {
-    type Target = LLVMValueRef;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl GetRef for ValueRef {
-    type RawRef = LLVMValueRef;
-    fn get_ref(&self) -> Self::RawRef {
-        self.0
-    }
-}
-
-impl From<LLVMValueRef> for ValueRef {
-    fn from(value_ref: LLVMValueRef) -> Self {
-        Self(value_ref)
-    }
-}
 
 impl ValueRef {
-    /// Obtain the type of a value.
+    /// Obtain the type of the value.
     #[must_use]
     pub fn type_of(&self) -> TypeRef {
         unsafe { TypeRef::from(core::LLVMTypeOf(self.0)) }
     }
 
-    /// Returns the kind of the given LLVM value (Obtain the enumerated type of a Value instance.).
+    /// Returns the kind of the given LLVM value (Obtain the enumerated type of the Value instance.).
     #[must_use]
     pub fn get_value_kind(&self) -> ValueKind {
         unsafe { ValueKind::from(core::LLVMGetValueKind(self.0)) }

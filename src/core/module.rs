@@ -8,7 +8,7 @@ use llvm_sys::{LLVMInlineAsmDialect, LLVMModuleFlagBehavior};
 
 use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
-use crate::core::value::ValueRef;
+use crate::core::values::ValueRef;
 use crate::{CInt, CStr, CString, GetRef, SizeT};
 
 /// Inline Asm Dialect

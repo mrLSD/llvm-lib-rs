@@ -1,6 +1,7 @@
 use super::basic_block::BasicBlockRef;
 use crate::core::context::ContextRef;
-use crate::core::value::ValueRef;
+
+use crate::core::values::ValueRef;
 use llvm_sys::core::{
     LLVMBuildRetVoid, LLVMCreateBuilderInContext, LLVMDisposeBuilder, LLVMPositionBuilderAtEnd,
 };
@@ -30,7 +31,7 @@ impl BuilderRef {
     /// Set and return builder return void value
     #[must_use]
     pub fn build_ret_void(&self) -> ValueRef {
-        unsafe { ValueRef::create(LLVMBuildRetVoid(self.0)) }
+        unsafe { ValueRef::from(LLVMBuildRetVoid(self.0)) }
     }
 }
 

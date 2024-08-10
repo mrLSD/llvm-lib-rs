@@ -1,5 +1,4 @@
 use crate::CUint;
-use libc::c_uint;
 use llvm_sys::core;
 use std::fmt::Display;
 use std::ops::Deref;
@@ -7,7 +6,6 @@ use std::ops::Deref;
 pub mod context;
 pub mod module;
 pub mod types;
-pub mod value;
 pub mod values;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,7 +18,7 @@ impl From<u32> for AddressSpace {
 }
 
 impl Deref for AddressSpace {
-    type Target = c_uint;
+    type Target = CUint;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
