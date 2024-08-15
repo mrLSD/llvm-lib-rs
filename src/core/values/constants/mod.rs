@@ -1,6 +1,9 @@
 //! This section contains APIs for interacting with `MValueRef` that
 //! correspond to `LLVM Constant` instances.
 
+pub mod composite;
+pub mod scalar;
+
 use super::ValueRef;
 use crate::core::types::TypeRef;
 use crate::GetRef;

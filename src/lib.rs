@@ -8,7 +8,7 @@ pub mod basic_block;
 pub mod builder;
 pub mod core;
 
-use libc::{c_char, c_int, c_uint, size_t};
+use libc::{c_char, c_double, c_int, c_uint, size_t};
 use std::ops::{Deref, DerefMut};
 
 /// Get raw references trait
@@ -53,6 +53,30 @@ impl Deref for CUint {
 impl DerefMut for CUint {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+/// `c_double` wrapper (from C-type)
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct CDouble(c_double);
+
+impl From<f64> for CDouble {
+    fn from(value: f64) -> Self {
+        // Force to unwrap
+        Self(c_double::try_from(value).expect("c_double casting fail from u32"))
+    }
+}
+
+impl From<CDouble> for f64 {
+    fn from(value: CDouble) -> Self {
+        value.0
+    }
+}
+
+impl Deref for CDouble {
+    type Target = c_double;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
