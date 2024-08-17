@@ -103,12 +103,36 @@ impl ValueRef {
     }
 
     /// Dump a representation of a value to stderr.
+    ///
+    /// # Details
+    ///
+    /// Dumps a textual representation of the LLVM value to standard output.
+    ///
+    /// This function wraps the `LLVMDumpValue` function from the LLVM core library. It prints a human-readable
+    /// representation of the value represented by `self` to standard output. This is useful for debugging or
+    /// inspecting the contents of a value during development.
     pub fn dump_value(&self) {
         unsafe { core::LLVMDumpValue(self.0) }
     }
 
     /// Return a string representation of the value. Use
     /// `dispose_message` to free the string.
+    ///
+    /// # Details
+    ///
+    /// Converts the LLVM value to a human-readable string representation.
+    ///
+    /// This function wraps the `LLVMPrintValueToString` function from the LLVM core library. It returns a
+    /// string containing a human-readable representation of the value represented by `self`. This is useful
+    /// for debugging or inspecting the contents of a value programmatically.
+    ///
+    /// The function returns `None` if the conversion fails or if the value cannot be represented as a string.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `Option<String>`:
+    /// - `Some(String)` containing the string representation of the value if successful.
+    /// - `None` if the conversion fails or the value cannot be represented as a string.
     #[must_use]
     pub fn print_value_to_string(&self) -> Option<String> {
         unsafe {
@@ -123,41 +147,126 @@ impl ValueRef {
     }
 
     /// Replace all uses of a value with another one.
+    ///
+    /// # Details
+    ///
+    /// Replaces all uses of this value with another value in the LLVM IR.
+    ///
+    /// This function wraps the `LLVMReplaceAllUsesWith` function from the LLVM core library. It replaces
+    /// every use of the value represented by `self` with the value represented by `new_val`. This is useful
+    /// for modifying LLVM IR when you need to substitute one value with another throughout the IR.
+    ///
+    /// # Parameters
+    ///
+    /// - `new_val`: A reference to the value that will replace all uses of `ValueRef`.
     pub fn replace_all_uses_with(&self, new_val: &Self) {
         unsafe { core::LLVMReplaceAllUsesWith(self.0, new_val.0) }
     }
 
     /// Determines whether the specified value instance is constant.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value is a constant in LLVM IR.
+    ///
+    /// This function wraps the `LLVMIsConstant` function from the LLVM core library. It determines whether
+    /// the value represented by `self` is a constant. In LLVM IR, constants are values that are known at compile time,
+    /// such as integer literals, floating-point literals, or constant expressions.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the value is a constant, otherwise returns `false`.
     #[must_use]
     pub fn is_constant(&self) -> bool {
         unsafe { core::LLVMIsConstant(self.0) != 0 }
     }
 
     /// Determine whether a value instance is undefined.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value is an 'undefined' value in LLVM IR.
+    ///
+    /// This function wraps the `LLVMIsUndef` function from the LLVM core library. It determines whether
+    /// the value represented by `self` is an 'undefined' value. In LLVM IR, an undefined value is a placeholder
+    /// that can take any value of the specified type during program execution, often used in optimization phases.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the value is an undefined value, otherwise returns `false`.
     #[must_use]
     pub fn is_undef(&self) -> bool {
         unsafe { core::LLVMIsUndef(self.0) != 0 }
     }
 
     /// Determine whether a value instance is poisonous.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value is a 'poison' value in LLVM IR.
+    ///
+    /// This function wraps the `LLVMIsPoison` function from the LLVM core library. It determines whether
+    /// the value represented by `self` is a 'poison' value. In LLVM IR, a poison value results from an operation
+    /// with undefined behavior and can propagate through further operations, potentially leading to incorrect results.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the value is a poison value, otherwise returns `false`.
     #[must_use]
     pub fn is_poison(&self) -> bool {
         unsafe { core::LLVMIsPoison(self.0) != 0 }
     }
 
     /// Determines whether the specified value instance is an `AMD` node.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value is an AMD node in LLVM IR and returns the corresponding value.
+    ///
+    /// This function wraps the `LLVMIsAMDNode` function from the LLVM core library. It determines whether
+    /// the value represented by `self` is an AMD node and returns the corresponding value if it is. AMD nodes
+    /// are specific to AMD's extensions in LLVM, and this function is used to identify and work with those nodes.
+    ///
+    /// # Returns
+    ///
+    /// Returns an instance of `Self` that represents the value if it is an AMD node.
     #[must_use]
     pub fn is_amd_node(&self) -> Self {
         unsafe { Self(core::LLVMIsAMDNode(self.0)) }
     }
 
     /// Determines whether the specified value instance is a value as metadata.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value can be treated as metadata in LLVM IR and returns the corresponding value.
+    ///
+    /// This function wraps the `LLVMIsAValueAsMetadata` function from the LLVM core library. It determines whether
+    /// the value represented by `self` can be treated as metadata and returns the corresponding value if it can. In LLVM IR,
+    /// some values can also be used as metadata, which is often used for attaching additional information to instructions
+    /// or other IR elements.
+    ///
+    /// # Returns
+    ///
+    /// Returns an instance of `Self` that represents the value if it can be treated as metadata.
     #[must_use]
     pub fn is_value_as_metadata(&self) -> Self {
         unsafe { Self(core::LLVMIsAValueAsMetadata(self.0)) }
     }
 
     /// Determines whether the specified value instance is an `AMD` string.
+    ///
+    /// # Details
+    ///
+    /// Checks if the value is an AMD string in LLVM IR and returns the corresponding value.
+    ///
+    /// This function wraps the `LLVMIsAMDString` function from the LLVM core library. It determines whether
+    /// the value represented by `self` is an AMD string and returns the corresponding value if it is. AMD strings
+    /// are specific to AMD's extensions in LLVM, and this function is used to identify and work with those strings.
+    ///
+    /// # Returns
+    ///
+    /// Returns an instance of `Self` that represents the value if it is an AMD string.
     #[must_use]
     pub fn is_amd_string(&self) -> Self {
         unsafe { Self(core::LLVMIsAMDString(self.0)) }

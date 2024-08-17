@@ -8,6 +8,16 @@ pub mod module;
 pub mod types;
 pub mod values;
 
+/// Represents an LLVM address space.
+///
+/// The `AddressSpace` struct encapsulates a numeric value that indicates a specific address space
+/// in LLVM. Address spaces are used in LLVM to distinguish between different regions of memory, such as
+/// global memory, local memory, and private memory, especially in contexts like GPUs or other specialized
+/// hardware where different memory regions have different characteristics.
+///
+/// # Attributes
+///
+/// - Wrapped address value - the underlying numeric value representing the address space.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AddressSpace(CUint);
 
@@ -39,6 +49,9 @@ pub unsafe fn dispose_message(message: *mut libc::c_char) {
 }
 
 /// LLVM version representation
+///
+/// The `Version` struct encapsulates the major, minor, and patch components of the LLVM version.
+/// This struct provides methods to initialize and retrieve the version information.
 pub struct Version {
     major: u32,
     minor: u32,
@@ -47,6 +60,23 @@ pub struct Version {
 
 impl Version {
     /// Init and return current LLVM version
+    ///
+    /// # Details
+    ///
+    /// Initializes and returns the current LLVM version.
+    ///
+    /// This method queries the LLVM library for its version information and returns a `Version` instance
+    /// containing the major, minor, and patch components of the LLVM version.
+    ///
+    /// # Returns
+    ///
+    /// A `Version` instance with the current LLVM version.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// let llvm_version = Version::new();
+    /// ```
     #[must_use]
     pub fn new() -> Self {
         let mut major = CUint::from(0_u32);
@@ -63,6 +93,23 @@ impl Version {
     }
 
     /// Return LLVM version data: (major, minor, patch)
+    ///
+    /// # Details
+    ///
+    ///  Returns the LLVM version as a tuple `(major, minor, patch)`.
+    ///
+    /// This method provides access to the individual components of the LLVM version stored in this `Version` instance.
+    ///
+    /// # Returns
+    ///
+    /// A tuple `(u32, u32, u32)` representing the major, minor, and patch components of the LLVM version.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// let llvm_version = Version::new();
+    /// let (major, minor, patch) = llvm_version.get();
+    /// ```
     #[must_use]
     pub const fn get(&self) -> (u32, u32, u32) {
         (self.minor, self.minor, self.patch)
@@ -363,33 +410,48 @@ impl From<Opcode> for LLVMOpcode {
     }
 }
 
+/// Represents the various integer comparison predicates in LLVM IR.
+///
+/// The `IntPredicate` enum defines the possible predicates that can be used for integer comparisons
+/// in LLVM IR. These predicates specify the condition under which an integer comparison is considered true.
+/// The predicates cover both signed and unsigned comparisons, as well as equality checks.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IntPredicate {
-    LLVMIntEQ,
-    LLVMIntNE,
-    LLVMIntUGT,
-    LLVMIntUGE,
-    LLVMIntULT,
-    LLVMIntULE,
-    LLVMIntSGT,
-    LLVMIntSGE,
-    LLVMIntSLT,
-    LLVMIntSLE,
+    /// Represents an equality comparison (`==`). This predicate is true if the two integers are equal.
+    IntEQ,
+    /// Represents an inequality comparison (`!=`). This predicate is true if the two integers are not equal.
+    IntNE,
+    /// Represents an unsigned greater than comparison (`>`). This predicate is true if the first integer is greater than the second, treating both as unsigned values.
+    IntUGT,
+    /// Represents an unsigned greater than or equal comparison (`>=`). This predicate is true if the first integer is greater than or equal to the second, treating both as unsigned values.
+    IntUGE,
+    /// Represents an unsigned less than comparison (`<`). This predicate is true if the first integer is less than the second, treating both as unsigned values.
+    IntULT,
+    /// Represents an unsigned less than or equal comparison (`<=`). This predicate is true if the first integer is less than or equal to the second, treating both as unsigned values.
+    IntULE,
+    /// Represents a signed greater than comparison (`>`). This predicate is true if the first integer is greater than the second, treating both as signed values.
+    IntSGT,
+    /// Represents a signed greater than or equal comparison (`>=`). This predicate is true if the first integer is greater than or equal to the second, treating both as signed values.
+    IntSGE,
+    /// Represents a signed less than comparison (`<`). This predicate is true if the first integer is less than the second, treating both as signed values.
+    IntSLT,
+    /// Represents a signed less than or equal comparison (`<=`). This predicate is true if the first integer is less than or equal to the second, treating both as signed values.
+    IntSLE,
 }
 
 impl From<LLVMIntPredicate> for IntPredicate {
     fn from(predicate: LLVMIntPredicate) -> Self {
         match predicate {
-            LLVMIntPredicate::LLVMIntEQ => Self::LLVMIntEQ,
-            LLVMIntPredicate::LLVMIntNE => Self::LLVMIntNE,
-            LLVMIntPredicate::LLVMIntUGT => Self::LLVMIntUGT,
-            LLVMIntPredicate::LLVMIntUGE => Self::LLVMIntUGE,
-            LLVMIntPredicate::LLVMIntULT => Self::LLVMIntULT,
-            LLVMIntPredicate::LLVMIntULE => Self::LLVMIntULE,
-            LLVMIntPredicate::LLVMIntSGT => Self::LLVMIntSGT,
-            LLVMIntPredicate::LLVMIntSGE => Self::LLVMIntSGE,
-            LLVMIntPredicate::LLVMIntSLT => Self::LLVMIntSLT,
-            LLVMIntPredicate::LLVMIntSLE => Self::LLVMIntSLE,
+            LLVMIntPredicate::LLVMIntEQ => Self::IntEQ,
+            LLVMIntPredicate::LLVMIntNE => Self::IntNE,
+            LLVMIntPredicate::LLVMIntUGT => Self::IntUGT,
+            LLVMIntPredicate::LLVMIntUGE => Self::IntUGE,
+            LLVMIntPredicate::LLVMIntULT => Self::IntULT,
+            LLVMIntPredicate::LLVMIntULE => Self::IntULE,
+            LLVMIntPredicate::LLVMIntSGT => Self::IntSGT,
+            LLVMIntPredicate::LLVMIntSGE => Self::IntSGE,
+            LLVMIntPredicate::LLVMIntSLT => Self::IntSLT,
+            LLVMIntPredicate::LLVMIntSLE => Self::IntSLE,
         }
     }
 }
@@ -397,59 +459,80 @@ impl From<LLVMIntPredicate> for IntPredicate {
 impl From<IntPredicate> for LLVMIntPredicate {
     fn from(predicate: IntPredicate) -> Self {
         match predicate {
-            IntPredicate::LLVMIntEQ => Self::LLVMIntEQ,
-            IntPredicate::LLVMIntNE => Self::LLVMIntNE,
-            IntPredicate::LLVMIntUGT => Self::LLVMIntUGT,
-            IntPredicate::LLVMIntUGE => Self::LLVMIntUGE,
-            IntPredicate::LLVMIntULT => Self::LLVMIntULT,
-            IntPredicate::LLVMIntULE => Self::LLVMIntULE,
-            IntPredicate::LLVMIntSGT => Self::LLVMIntSGT,
-            IntPredicate::LLVMIntSGE => Self::LLVMIntSGE,
-            IntPredicate::LLVMIntSLT => Self::LLVMIntSLT,
-            IntPredicate::LLVMIntSLE => Self::LLVMIntSLE,
+            IntPredicate::IntEQ => Self::LLVMIntEQ,
+            IntPredicate::IntNE => Self::LLVMIntNE,
+            IntPredicate::IntUGT => Self::LLVMIntUGT,
+            IntPredicate::IntUGE => Self::LLVMIntUGE,
+            IntPredicate::IntULT => Self::LLVMIntULT,
+            IntPredicate::IntULE => Self::LLVMIntULE,
+            IntPredicate::IntSGT => Self::LLVMIntSGT,
+            IntPredicate::IntSGE => Self::LLVMIntSGE,
+            IntPredicate::IntSLT => Self::LLVMIntSLT,
+            IntPredicate::IntSLE => Self::LLVMIntSLE,
         }
     }
 }
 
+/// Represents the various floating-point comparison predicates in LLVM IR.
+///
+/// The `RealPredicate` enum defines the possible predicates that can be used for floating-point comparisons
+/// in LLVM IR. These predicates specify the conditions under which a floating-point comparison is considered true.
+/// The predicates include ordered and unordered comparisons, as well as equality and inequality checks.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RealPredicate {
-    LLVMRealPredicateFalse = 0,
-    LLVMRealOEQ,
-    LLVMRealOGT,
-    LLVMRealOGE,
-    LLVMRealOLT,
-    LLVMRealOLE,
-    LLVMRealONE,
-    LLVMRealORD,
-    LLVMRealUNO,
-    LLVMRealUEQ,
-    LLVMRealUGT,
-    LLVMRealUGE,
-    LLVMRealULT,
-    LLVMRealULE,
-    LLVMRealUNE,
-    LLVMRealPredicateTrue,
+    /// Represents a predicate that always returns false. No comparison is true under this predicate.
+    RealPredicateFalse = 0,
+    /// Represents an ordered equality comparison (`==`). This predicate is true if the two floating-point numbers are equal and neither is NaN.
+    RealOEQ,
+    /// Represents an ordered greater than comparison (`>`). This predicate is true if the first floating-point number is greater than the second and neither is NaN.
+    RealOGT,
+    /// Represents an ordered greater than or equal comparison (`>=`). This predicate is true if the first floating-point number is greater than or equal to the second and neither is NaN.
+    RealOGE,
+    /// Represents an ordered less than comparison (`<`). This predicate is true if the first floating-point number is less than the second and neither is NaN.
+    RealOLT,
+    /// Represents an ordered less than or equal comparison (`<=`). This predicate is true if the first floating-point number is less than or equal to the second and neither is NaN.
+    RealOLE,
+    /// Represents an ordered inequality comparison (`!=`). This predicate is true if the two floating-point numbers are not equal and neither is NaN.
+    RealONE,
+    /// Represents an ordered comparison. This predicate is true if neither of the floating-point numbers is NaN.
+    RealORD,
+    /// Represents an unordered comparison. This predicate is true if either of the floating-point numbers is NaN.
+    RealUNO,
+    /// Represents an unordered equality comparison. This predicate is true if the two floating-point numbers are equal or either is NaN.
+    RealUEQ,
+    /// Represents an unordered greater than comparison. This predicate is true if the first floating-point number is greater than the second or either is NaN.
+    RealUGT,
+    /// Represents an unordered greater than or equal comparison. This predicate is true if the first floating-point number is greater than or equal to the second or either is NaN.
+    RealUGE,
+    /// Represents an unordered less than comparison. This predicate is true if the first floating-point number is less than the second or either is NaN.
+    RealULT,
+    /// Represents an unordered less than or equal comparison. This predicate is true if the first floating-point number is less than or equal to the second or either is NaN.
+    RealULE,
+    /// Represents an unordered inequality comparison. This predicate is true if the two floating-point numbers are not equal or either is NaN.
+    RealUNE,
+    /// Represents a predicate that always returns true. All comparisons are true under this predicate.
+    RealPredicateTrue,
 }
 
 impl From<LLVMRealPredicate> for RealPredicate {
     fn from(predicate: LLVMRealPredicate) -> Self {
         match predicate {
-            LLVMRealPredicate::LLVMRealPredicateFalse => Self::LLVMRealPredicateFalse,
-            LLVMRealPredicate::LLVMRealOEQ => Self::LLVMRealOEQ,
-            LLVMRealPredicate::LLVMRealOGT => Self::LLVMRealOGT,
-            LLVMRealPredicate::LLVMRealOGE => Self::LLVMRealOGE,
-            LLVMRealPredicate::LLVMRealOLT => Self::LLVMRealOLT,
-            LLVMRealPredicate::LLVMRealOLE => Self::LLVMRealOLE,
-            LLVMRealPredicate::LLVMRealONE => Self::LLVMRealONE,
-            LLVMRealPredicate::LLVMRealORD => Self::LLVMRealORD,
-            LLVMRealPredicate::LLVMRealUNO => Self::LLVMRealUNO,
-            LLVMRealPredicate::LLVMRealUEQ => Self::LLVMRealUEQ,
-            LLVMRealPredicate::LLVMRealUGT => Self::LLVMRealUGT,
-            LLVMRealPredicate::LLVMRealUGE => Self::LLVMRealUGE,
-            LLVMRealPredicate::LLVMRealULT => Self::LLVMRealULT,
-            LLVMRealPredicate::LLVMRealULE => Self::LLVMRealULE,
-            LLVMRealPredicate::LLVMRealUNE => Self::LLVMRealUNE,
-            LLVMRealPredicate::LLVMRealPredicateTrue => Self::LLVMRealPredicateTrue,
+            LLVMRealPredicate::LLVMRealPredicateFalse => Self::RealPredicateFalse,
+            LLVMRealPredicate::LLVMRealOEQ => Self::RealOEQ,
+            LLVMRealPredicate::LLVMRealOGT => Self::RealOGT,
+            LLVMRealPredicate::LLVMRealOGE => Self::RealOGE,
+            LLVMRealPredicate::LLVMRealOLT => Self::RealOLT,
+            LLVMRealPredicate::LLVMRealOLE => Self::RealOLE,
+            LLVMRealPredicate::LLVMRealONE => Self::RealONE,
+            LLVMRealPredicate::LLVMRealORD => Self::RealORD,
+            LLVMRealPredicate::LLVMRealUNO => Self::RealUNO,
+            LLVMRealPredicate::LLVMRealUEQ => Self::RealUEQ,
+            LLVMRealPredicate::LLVMRealUGT => Self::RealUGT,
+            LLVMRealPredicate::LLVMRealUGE => Self::RealUGE,
+            LLVMRealPredicate::LLVMRealULT => Self::RealULT,
+            LLVMRealPredicate::LLVMRealULE => Self::RealULE,
+            LLVMRealPredicate::LLVMRealUNE => Self::RealUNE,
+            LLVMRealPredicate::LLVMRealPredicateTrue => Self::RealPredicateTrue,
         }
     }
 }
@@ -457,22 +540,22 @@ impl From<LLVMRealPredicate> for RealPredicate {
 impl From<RealPredicate> for LLVMRealPredicate {
     fn from(predicate: RealPredicate) -> Self {
         match predicate {
-            RealPredicate::LLVMRealPredicateFalse => Self::LLVMRealPredicateFalse,
-            RealPredicate::LLVMRealOEQ => Self::LLVMRealOEQ,
-            RealPredicate::LLVMRealOGT => Self::LLVMRealOGT,
-            RealPredicate::LLVMRealOGE => Self::LLVMRealOGE,
-            RealPredicate::LLVMRealOLT => Self::LLVMRealOLT,
-            RealPredicate::LLVMRealOLE => Self::LLVMRealOLE,
-            RealPredicate::LLVMRealONE => Self::LLVMRealONE,
-            RealPredicate::LLVMRealORD => Self::LLVMRealORD,
-            RealPredicate::LLVMRealUNO => Self::LLVMRealUNO,
-            RealPredicate::LLVMRealUEQ => Self::LLVMRealUEQ,
-            RealPredicate::LLVMRealUGT => Self::LLVMRealUGT,
-            RealPredicate::LLVMRealUGE => Self::LLVMRealUGE,
-            RealPredicate::LLVMRealULT => Self::LLVMRealULT,
-            RealPredicate::LLVMRealULE => Self::LLVMRealULE,
-            RealPredicate::LLVMRealUNE => Self::LLVMRealUNE,
-            RealPredicate::LLVMRealPredicateTrue => Self::LLVMRealPredicateTrue,
+            RealPredicate::RealPredicateFalse => Self::LLVMRealPredicateFalse,
+            RealPredicate::RealOEQ => Self::LLVMRealOEQ,
+            RealPredicate::RealOGT => Self::LLVMRealOGT,
+            RealPredicate::RealOGE => Self::LLVMRealOGE,
+            RealPredicate::RealOLT => Self::LLVMRealOLT,
+            RealPredicate::RealOLE => Self::LLVMRealOLE,
+            RealPredicate::RealONE => Self::LLVMRealONE,
+            RealPredicate::RealORD => Self::LLVMRealORD,
+            RealPredicate::RealUNO => Self::LLVMRealUNO,
+            RealPredicate::RealUEQ => Self::LLVMRealUEQ,
+            RealPredicate::RealUGT => Self::LLVMRealUGT,
+            RealPredicate::RealUGE => Self::LLVMRealUGE,
+            RealPredicate::RealULT => Self::LLVMRealULT,
+            RealPredicate::RealULE => Self::LLVMRealULE,
+            RealPredicate::RealUNE => Self::LLVMRealUNE,
+            RealPredicate::RealPredicateTrue => Self::LLVMRealPredicateTrue,
         }
     }
 }

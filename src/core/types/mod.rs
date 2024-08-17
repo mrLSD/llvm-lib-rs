@@ -13,29 +13,57 @@ use crate::GetRef;
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::{core, LLVMTypeKind};
 
+/// Represents the different kinds of types in LLVM IR.
+///
+/// The `TypeKind` enum categorizes the various types that can exist within LLVM IR. Each variant of this enum
+/// corresponds to a specific kind of type that LLVM supports, such as integer types, floating-point types,
+/// vector types, and others. This enum is useful for identifying and working with different types when
+/// manipulating LLVM IR.
+///
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TypeKind {
+    /// Represents the `void` type, which has no value.
     VoidTypeKind,
+    /// Represents the 16-bit floating-point type (`half`).
     HalfTypeKind,
+    /// Represents the 32-bit floating-point type (`float`).
     FloatTypeKind,
+    /// Represents the 64-bit floating-point type (`double`).
     DoubleTypeKind,
+    /// Represents the 80-bit floating-point type used in x86 architecture.
     X86_FP80TypeKind,
+    /// Represents the 128-bit floating-point type (`fp128`).
     FP128TypeKind,
+    /// Represents the 128-bit floating-point type used in `PowerPC` architecture.
     PPC_FP128TypeKind,
+    /// Represents a label type, which is used for basic block labels.
     LabelTypeKind,
+    /// Represents an integer type of arbitrary bit width.
     IntegerTypeKind,
+    /// Represents a function type, including the return type and parameter types.
     FunctionTypeKind,
+    /// Represents a structure type, which is a collection of fields.
     StructTypeKind,
+    /// Represents an array type, which is a sequence of elements of a specified type.
     ArrayTypeKind,
+    /// Represents a pointer type, pointing to a value of a specified type.
     PointerTypeKind,
+    /// Represents a vector type, which is a sequence of elements of a specified type that can be processed in parallel.
     VectorTypeKind,
+    /// Represents metadata type, which is used for attaching additional information to instructions.
     MetadataTypeKind,
+    /// Represents the MMX type used in x86 architecture.
     X86_MMXTypeKind,
+    /// Represents a token type, used for operand bundles.
     TokenTypeKind,
+    /// Represents a scalable vector type, which can dynamically change in size.
     ScalableVectorTypeKind,
+    /// Represents the `bfloat` floating-point type used in machine learning applications.
     BFloatTypeKind,
+    /// Represents the AMX type used in x86 architecture for matrix multiplication.
     X86_AMXTypeKind,
+    /// Represents a target-specific extended type.
     TargetExtTypeKind,
 }
 
@@ -210,7 +238,6 @@ impl TypeRef {
     }
 
     /// Create function type based on argument types array, and function return type
-    /// TODO: return error
     #[must_use]
     pub fn function_type(args_type: &[Self], return_type: &Self) -> Self {
         unsafe {
