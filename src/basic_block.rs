@@ -1,11 +1,18 @@
 use crate::core::context::ContextRef;
 use crate::core::values::ValueRef;
-use crate::CString;
+use crate::{CString, GetRef};
 use llvm_sys::core::LLVMAppendBasicBlockInContext;
 use llvm_sys::prelude::LLVMBasicBlockRef;
 
 /// LLVM Basic block wrapper
 pub struct BasicBlockRef(LLVMBasicBlockRef);
+
+impl GetRef for BasicBlockRef {
+    type RawRef = LLVMBasicBlockRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
 
 impl BasicBlockRef {
     // Get raw basic block reference
