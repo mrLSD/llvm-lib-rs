@@ -1,3 +1,15 @@
+//! Functions in this section operate on `other` types.
+//!
+//! ## Other types included
+//! - `VoidTypeRef`
+//! - `LabelTypeRef`
+//! - `X86MMXTypeRef`
+//! - `X86AMXTypeRef`
+//! - `TokenTypeRef`
+//! - `MetadataTypeRef`
+//! - `TargetExtTypeRef`
+//!
+
 use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
 use crate::{CString, CUint, GetRef};
@@ -18,6 +30,12 @@ impl GetRef for VoidTypeRef {
     type RawRef = LLVMTypeRef;
     fn get_ref(&self) -> Self::RawRef {
         self.0
+    }
+}
+
+impl From<VoidTypeRef> for TypeRef {
+    fn from(value: VoidTypeRef) -> Self {
+        Self(value.0)
     }
 }
 
@@ -52,6 +70,12 @@ impl GetRef for LabelTypeRef {
     }
 }
 
+impl From<LabelTypeRef> for TypeRef {
+    fn from(value: LabelTypeRef) -> Self {
+        Self(value.0)
+    }
+}
+
 impl LabelTypeRef {
     /// Create a label type in a context.
     #[must_use]
@@ -80,6 +104,12 @@ impl GetRef for X86MMXTypeRef {
     type RawRef = LLVMTypeRef;
     fn get_ref(&self) -> Self::RawRef {
         self.0
+    }
+}
+
+impl From<X86MMXTypeRef> for TypeRef {
+    fn from(value: X86MMXTypeRef) -> Self {
+        Self(value.0)
     }
 }
 
@@ -114,6 +144,12 @@ impl GetRef for X86AMXTypeRef {
     }
 }
 
+impl From<X86AMXTypeRef> for TypeRef {
+    fn from(value: X86AMXTypeRef) -> Self {
+        Self(value.0)
+    }
+}
+
 impl X86AMXTypeRef {
     /// Create an X86 AMX type in a context.
     #[must_use]
@@ -145,6 +181,12 @@ impl GetRef for TokenTypeRef {
     }
 }
 
+impl From<TokenTypeRef> for TypeRef {
+    fn from(value: TokenTypeRef) -> Self {
+        Self(value.0)
+    }
+}
+
 impl TokenTypeRef {
     /// Create a token type in a context.
     #[must_use]
@@ -170,6 +212,12 @@ impl GetRef for MetadataTypeRef {
     }
 }
 
+impl From<MetadataTypeRef> for TypeRef {
+    fn from(value: MetadataTypeRef) -> Self {
+        Self(value.0)
+    }
+}
+
 impl MetadataTypeRef {
     /// Create a metadata type in a context.
     #[must_use]
@@ -192,6 +240,12 @@ impl GetRef for TargetExtTypeRef {
     type RawRef = LLVMTypeRef;
     fn get_ref(&self) -> Self::RawRef {
         self.0
+    }
+}
+
+impl From<TargetExtTypeRef> for TypeRef {
+    fn from(value: TargetExtTypeRef) -> Self {
+        Self(value.0)
     }
 }
 

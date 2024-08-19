@@ -5,46 +5,73 @@ use llvm_sys::core;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMValueKind;
 use std::ops::Deref;
-use std::rc::Rc;
 
 pub mod constants;
 pub mod general;
 pub mod uses;
+
+pub use constants::ConstValueRef;
 
 /// Represents the different kinds of values in LLVM IR.
 ///
 /// The `ValueKind` enum categorizes the various types of values that can exist within LLVM IR. Each variant
 /// of this enum corresponds to a specific kind of value or entity in the LLVM IR, such as a function, global variable,
 /// instruction, or constant. This enum is useful for identifying the type of a value when working with LLVM IR structures.
-///
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ValueKind {
+    /// Represents a function argument. Each argument passed to a function is an instance of this kind.
     Argument,
+    /// Represents a basic block within a function. Basic blocks are the building blocks of a function's control flow.
     BasicBlock,
+    /// Represents a memory use in the `MemorySSA`. This kind tracks the use of memory locations within SSA form.
     MemoryUse,
+    /// Represents a memory definition in the `MemorySSA`. This kind tracks the definition of memory locations within SSA form.
     MemoryDef,
+    /// Represents a memory PHI node in the `MemorySSA`. This kind handles merging memory states from different control flow paths.
     MemoryPhi,
+    /// Represents a function. Functions are the primary callable entities in LLVM IR.
     Function,
+    /// Represents a global alias. Global aliases are alternative names for global variables or functions.
     GlobalAlias,
+    /// Represents an indirect function. This is a function pointer that can be resolved at runtime to a specific implementation.
     GlobalIFunc,
+    /// Represents a global variable. Global variables are variables that are globally accessible across the entire module.
     GlobalVariable,
+    /// Represents a block address. This is used to refer to the address of a basic block within a function.
     BlockAddress,
+    /// Represents a constant expression. Constant expressions are constant values that are computed at compile time from other constants.
     ConstantExpr,
+    /// Represents a constant array. Constant arrays are arrays whose elements are all constant values.
     ConstantArray,
+    /// Represents a constant struct. Constant structs are structures whose fields are all constant values.
     ConstantStruct,
+    /// Represents a constant vector. Constant vectors are vectors whose elements are all constant values.
     ConstantVector,
+    /// Represents an undefined value. Undefined values are placeholders that can take any value of their type during execution.
     Undef,
+    /// Represents a constant aggregate with all elements set to zero. This includes arrays, structs, and vectors with all elements set to zero.
     ConstantAggregateZero,
+    /// Represents a constant data array. These are arrays of simple data types like integers or floating-point numbers, stored as constants.
     ConstantDataArray,
+    /// Represents a constant data vector. These are vectors of simple data types like integers or floating-point numbers, stored as constants.
     ConstantDataVector,
+    /// Represents a constant integer. Constant integers are fixed integer values known at compile time.
     ConstantInt,
+    /// Represents a constant floating-point value. Constant floating-point values are fixed floating-point numbers known at compile time.
     ConstantFP,
+    /// Represents a constant null pointer. This is a pointer that is explicitly set to null.
     ConstantPointerNull,
+    /// Represents a constant token with no value. Used in certain intrinsic functions that deal with tokens.
     ConstantTokenNone,
+    /// Represents metadata used as a value. Metadata can be used to store extra information for optimizations, debugging, or analysis.
     MetadataAsValue,
+    /// Represents inline assembly code. Inline assembly allows embedding low-level assembly code within LLVM IR.
     InlineAsm,
+    /// Represents an instruction. Instructions are the individual operations that make up the body of functions.
     Instruction,
+    /// Represents a poison value. Poison values result from operations with undefined behavior and can propagate to cause further undefined behavior.
     Poison,
+    /// Represents a target-specific constant value that has no direct representation in the source code.
     ConstantTargetNone,
 }
 
@@ -106,14 +133,8 @@ impl From<LLVMValueRef> for ValueRef {
     }
 }
 
+/// That implementations related to LLVM Modules `MemoryDef`.
 impl ValueRef {
-    /// Get function parameter by index
-    // TODO: move to Function Values
-    #[must_use]
-    pub fn get_func_param(func_value: &Rc<Self>, index: usize) -> Self {
-        unsafe { Self(core::LLVMGetParam(***func_value, *CUint::from(index))) }
-    }
-
     /// Get the template string used for an inline assembly snippet.
     ///
     /// # Details

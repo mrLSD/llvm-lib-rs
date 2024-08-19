@@ -9,8 +9,37 @@ use super::ValueRef;
 use crate::core::types::TypeRef;
 use crate::GetRef;
 use llvm_sys::core;
+use llvm_sys::prelude::LLVMValueRef;
 
-impl ValueRef {
+#[derive(Debug, Clone)]
+pub struct ConstValueRef(LLVMValueRef);
+
+impl From<LLVMValueRef> for ConstValueRef {
+    fn from(value: LLVMValueRef) -> Self {
+        Self(value)
+    }
+}
+
+impl GetRef for ConstValueRef {
+    type RawRef = LLVMValueRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
+
+impl From<ValueRef> for ConstValueRef {
+    fn from(value: ValueRef) -> Self {
+        Self(value.get_ref())
+    }
+}
+
+impl From<ConstValueRef> for ValueRef {
+    fn from(value: ConstValueRef) -> Self {
+        Self(value.get_ref())
+    }
+}
+
+impl ConstValueRef {
     /// Obtain a constant value referring to the null instance of a type.
     ///
     /// # Details
