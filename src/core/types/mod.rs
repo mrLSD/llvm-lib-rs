@@ -8,8 +8,7 @@ pub mod structs;
 use std::ops::Deref;
 
 use crate::core::context::ContextRef;
-use crate::CUint;
-use crate::GetRef;
+use crate::{CStr, GetRef};
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::{core, LLVMTypeKind};
 
@@ -19,7 +18,6 @@ use llvm_sys::{core, LLVMTypeKind};
 /// corresponds to a specific kind of type that LLVM supports, such as integer types, floating-point types,
 /// vector types, and others. This enum is useful for identifying and working with different types when
 /// manipulating LLVM IR.
-///
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TypeKind {
@@ -148,111 +146,88 @@ impl GetRef for TypeRef {
 
 impl TypeRef {
     /// Obtain the enumerated type of a Type instance.
+    ///
+    /// # Details
+    ///
+    /// Retrieves the kind of the LLVM type.
+    ///
+    /// This function wraps the `LLVMGetTypeKind` function from the LLVM core library. It returns the `TypeKind`
+    /// representing the specific kind of the type associated with `self`. The kind of a type indicates whether it is,
+    /// for example, an integer, floating-point, function, array, pointer, or other type in LLVM IR.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `TypeKind` representing the kind of the type.
     #[must_use]
-    pub fn get_kind(&self) -> TypeKind {
+    pub fn get_type_kind(&self) -> TypeKind {
         unsafe { TypeKind::from(core::LLVMGetTypeKind(self.0)) }
     }
 
     /// Whether the type has a known size.
     ///
     /// Things that don't have a size are abstract types, labels, and void.
+    ///
+    /// # Details
+    ///
+    /// Checks whether the LLVM type has a known size.
+    ///
+    /// This function wraps the `LLVMTypeIsSized` function from the LLVM core library. It determines whether
+    /// the type represented by `self` has a known size in memory. Some types, such as opaque types, may not have
+    /// a defined size until more information is provided.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the type has a known size, otherwise returns `false`.
     #[must_use]
-    pub fn is_sized(&self) -> bool {
+    pub fn type_is_sized(&self) -> bool {
         unsafe { core::LLVMTypeIsSized(self.0) != 0 }
     }
 
     /// Obtain the context to which this type instance is associated.
+    ///
+    /// # Details
+    ///
+    /// Dumps a textual representation of the LLVM type to standard output.
+    ///
+    /// This function wraps the `LLVMDumpType` function from the LLVM core library. It prints a human-readable
+    /// representation of the type represented by `self` to standard output. This function is primarily useful for
+    /// debugging purposes, allowing you to inspect the type information directly in the console or terminal.
     #[must_use]
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_type_context(&self) -> ContextRef {
         unsafe { ContextRef::from(core::LLVMGetTypeContext(self.0)) }
     }
 
     /// Dump a representation of a type to stderr.
-    pub fn dump(&self) {
+    pub fn dump_type(&self) {
         unsafe { core::LLVMDumpType(self.0) }
     }
 
-    /// Create Void type in context
+    /// Return a string representation of the type. Use
+    /// `LLVMDisposeMessage` to free the string.
+    ///
+    /// # Details
+    ///
+    /// Converts the LLVM type to a human-readable string representation.
+    ///
+    /// This function wraps the `LLVMPrintTypeToString` function from the LLVM core library. It returns a `String`
+    /// containing a human-readable representation of the type represented by `self`. This is useful for debugging
+    /// or logging the type information in a readable format.
+    ///
+    /// If the conversion fails, the function returns an empty string.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `String` containing the string representation of the type.
     #[must_use]
-    pub fn void_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMVoidTypeInContext(**context)) }
-    }
-
-    /// Create Ptr type in context
-    #[must_use]
-    pub fn ptr_type(ptr_raw_type: &Self, address_space: u32) -> Self {
+    pub fn print_type_to_string(&self) -> String {
         unsafe {
-            Self(core::LLVMPointerType(
-                **ptr_raw_type,
-                *CUint::from(address_space),
-            ))
-        }
-    }
-
-    /// Create f32 type in context
-    #[must_use]
-    pub fn f32_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMFloatTypeInContext(**context)) }
-    }
-
-    /// Create f64 type in context
-    #[must_use]
-    pub fn f64_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMDoubleTypeInContext(**context)) }
-    }
-
-    /// Create bool type in context
-    #[must_use]
-    pub fn bool_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMInt1TypeInContext(**context)) }
-    }
-
-    /// Create i8 type in context
-    #[must_use]
-    pub fn i8_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMInt8TypeInContext(**context)) }
-    }
-
-    /// Create i16 type in context
-    #[must_use]
-    pub fn i16_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMInt16TypeInContext(**context)) }
-    }
-
-    /// Create i32 type in context
-    #[must_use]
-    pub fn i32_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMInt32TypeInContext(**context)) }
-    }
-
-    /// Create i64 type in context
-    #[must_use]
-    pub fn i64_type(context: &ContextRef) -> Self {
-        unsafe { Self(core::LLVMInt64TypeInContext(**context)) }
-    }
-
-    /// Create array type in context based on Type
-    #[must_use]
-    pub fn array_type(array_type: &Self, size: u64) -> Self {
-        unsafe { Self(core::LLVMArrayType2(**array_type, size)) }
-    }
-
-    /// Create function type based on argument types array, and function return type
-    #[must_use]
-    pub fn function_type(args_type: &[Self], return_type: &Self) -> Self {
-        unsafe {
-            let mut args_type = args_type.iter().map(|v| v.0).collect::<Vec<_>>();
-            let args = if args_type.is_empty() {
-                std::ptr::null_mut()
-            } else {
-                args_type.as_mut_ptr()
-            };
-            Self(core::LLVMFunctionType(
-                return_type.0,
-                args,
-                *CUint::from(args_type.len()),
-                0,
-            ))
+            let c_str = core::LLVMPrintTypeToString(self.0);
+            if c_str.is_null() {
+                return String::new();
+            }
+            let rust_string = CStr::new(c_str).to_string();
+            super::dispose_message(c_str);
+            rust_string
         }
     }
 }
