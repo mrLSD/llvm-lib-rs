@@ -42,10 +42,16 @@ impl AddressSpace {
 }
 
 /// Dispose LLVM message
-/// ## Safety
-/// Common function to dispose allocated message
-pub unsafe fn dispose_message(message: *mut libc::c_char) {
-    unsafe { core::LLVMDisposeMessage(message) }
+///
+/// ## Panics
+/// This function is purely informative and panics with a message about the call
+/// being unavailable. Since there are no cases in which it can be called in
+/// safe code. For raw access, if there is such a need, must be called
+/// `LLVMDisposeMessage` directly.
+pub fn dispose_message(_message: libc::c_char) {
+    unreachable!(
+        "LLVMDisposeMessage is unsafe adn restricted to operated to operate directly for safe code"
+    );
 }
 
 /// LLVM version representation

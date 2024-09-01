@@ -3,6 +3,7 @@
 
 pub mod composite;
 pub mod expressions;
+mod global_values;
 pub mod scalar;
 
 use super::ValueRef;
