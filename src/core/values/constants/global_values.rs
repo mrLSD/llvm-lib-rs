@@ -1,6 +1,7 @@
 use super::ValueRef;
 use crate::core::module::{MetadataRef, ModuleRef};
 use crate::core::types::TypeRef;
+use crate::core::{Linkage, Visibility};
 use crate::{CStr, CString, CUint, GetRef};
 use llvm_sys::core;
 use llvm_sys::prelude::LLVMValueMetadataEntry;
@@ -24,36 +25,26 @@ impl GetRef for ValueMetadataEntry {
 
 impl ValueRef {
     /// Get the module that contains the global value.
-    ///
-    /// @see llvm::GlobalValue::getParent()
     pub fn get_global_parent(&self) -> ModuleRef {
         unsafe { ModuleRef::from(core::LLVMGetGlobalParent(self.0)) }
     }
 
     /// Determine if the global value is a declaration.
-    ///
-    /// @see llvm::GlobalValue::isDeclaration()
     pub fn is_declaration(&self) -> bool {
         unsafe { core::LLVMIsDeclaration(self.0) != 0 }
     }
 
     /// Get the linkage of the global value.
-    ///
-    /// @see llvm::GlobalValue::getLinkage()
-    pub fn get_linkage(&self) -> LLVMLinkage {
-        unsafe { core::LLVMGetLinkage(self.0) }
+    pub fn get_linkage(&self) -> Linkage {
+        unsafe { crate::core::Linkage::from(core::LLVMGetLinkage(self.0)) }
     }
 
     /// Set the linkage of the global value.
-    ///
-    /// @see llvm::GlobalValue::setLinkage()
-    pub fn set_linkage(&self, linkage: LLVMLinkage) {
-        unsafe { core::LLVMSetLinkage(self.0, linkage) }
+    pub fn set_linkage(&self, linkage: Linkage) {
+        unsafe { core::LLVMSetLinkage(self.0, linkage.into()) }
     }
 
     /// Get the section of the global value.
-    ///
-    /// @see llvm::GlobalValue::getSection()
     pub fn get_section(&self) -> Option<String> {
         unsafe {
             let section = core::LLVMGetSection(self.0);
@@ -66,8 +57,6 @@ impl ValueRef {
     }
 
     /// Set the section of the global value.
-    ///
-    /// @see llvm::GlobalValue::setSection()
     pub fn set_section(&self, section: &str) {
         let c_section = CString::from(section);
         unsafe {
@@ -76,18 +65,14 @@ impl ValueRef {
     }
 
     /// Get the visibility of the global value.
-    ///
-    /// @see llvm::GlobalValue::getVisibility()
     pub fn get_visibility(&self) -> Visibility {
-        unsafe { core::LLVMGetVisibility(self.0) }
+        unsafe { crate::core::Visibility::from(core::LLVMGetVisibility(self.0)) }
     }
 
     /// Set the visibility of the global value.
-    ///
-    /// @see llvm::GlobalValue::setVisibility()
     pub fn set_visibility(&self, visibility: Visibility) {
         unsafe {
-            core::LLVMSetVisibility(self.0, visibility);
+            core::LLVMSetVisibility(self.0, visibility.into());
         }
     }
 

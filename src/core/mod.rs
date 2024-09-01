@@ -1,5 +1,7 @@
 use crate::CUint;
-use llvm_sys::{core, LLVMIntPredicate, LLVMOpcode, LLVMRealPredicate};
+use llvm_sys::{
+    core, LLVMIntPredicate, LLVMLinkage, LLVMOpcode, LLVMRealPredicate, LLVMVisibility,
+};
 use std::fmt::Display;
 use std::ops::Deref;
 
@@ -562,6 +564,131 @@ impl From<RealPredicate> for LLVMRealPredicate {
             RealPredicate::RealULE => Self::LLVMRealULE,
             RealPredicate::RealUNE => Self::LLVMRealUNE,
             RealPredicate::RealPredicateTrue => Self::LLVMRealPredicateTrue,
+        }
+    }
+}
+
+/// Represents the linkage types in LLVM for global values.
+/// Linkage types determine the visibility and behavior of symbols across different modules and within the same module.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Linkage {
+    /// Externally visible function or variable. Can be linked from another module.
+    ExternalLinkage,
+    /// Similar to `ExternalLinkage`, but the symbol may be discarded if not used.
+    AvailableExternallyLinkage,
+    /// Keeps one copy of the function or variable when linking, discarding others.
+    LinkOnceAnyLinkage,
+    /// Similar to `LinkOnceAnyLinkage`, but the symbol cannot be discarded.
+    LinkOnceODRLinkage,
+    /// Same as `LinkOnceODRLinkage`, but with hidden visibility.
+    LinkOnceODRAutoHideLinkage,
+    /// Keeps one copy, discarding others, but prefer the local copy.
+    WeakAnyLinkage,
+    /// Similar to `WeakAnyLinkage`, but ensures that the symbol is unique and is emitted only once.
+    WeakODRLinkage,
+    /// Appending linkage: when linked, multiple definitions of the same variable are concatenated.
+    AppendingLinkage,
+    /// Local to the translation unit, not visible outside of it.
+    InternalLinkage,
+    /// Similar to `InternalLinkage`, but prevents inlining and other optimizations.
+    PrivateLinkage,
+    /// Indicates that the global value should be imported from a DLL.
+    DLLImportLinkage,
+    /// Indicates that the global value should be exported to a DLL.
+    DLLExportLinkage,
+    /// The global variable or function is merged into the program only if it is used.
+    ExternalWeakLinkage,
+    /// A special linkage type used internally by the linker.
+    GhostLinkage,
+    /// Common linkage for uninitialized global variables.
+    CommonLinkage,
+    /// Linker private linkage, used to indicate a symbol that is internal to the module.
+    LinkerPrivateLinkage,
+    /// Weak version of `LinkerPrivateLinkage`.
+    LinkerPrivateWeakLinkage,
+}
+
+impl From<LLVMLinkage> for Linkage {
+    fn from(linkage: LLVMLinkage) -> Self {
+        match linkage {
+            LLVMLinkage::LLVMExternalLinkage => Self::ExternalLinkage,
+            LLVMLinkage::LLVMAvailableExternallyLinkage => Self::AvailableExternallyLinkage,
+            LLVMLinkage::LLVMLinkOnceAnyLinkage => Self::LinkOnceAnyLinkage,
+            LLVMLinkage::LLVMLinkOnceODRLinkage => Self::LinkOnceODRLinkage,
+            LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage => Self::LinkOnceODRAutoHideLinkage,
+            LLVMLinkage::LLVMWeakAnyLinkage => Self::WeakAnyLinkage,
+            LLVMLinkage::LLVMWeakODRLinkage => Self::WeakODRLinkage,
+            LLVMLinkage::LLVMAppendingLinkage => Self::AppendingLinkage,
+            LLVMLinkage::LLVMInternalLinkage => Self::InternalLinkage,
+            LLVMLinkage::LLVMPrivateLinkage => Self::PrivateLinkage,
+            LLVMLinkage::LLVMDLLImportLinkage => Self::DLLImportLinkage,
+            LLVMLinkage::LLVMDLLExportLinkage => Self::DLLExportLinkage,
+            LLVMLinkage::LLVMExternalWeakLinkage => Self::ExternalWeakLinkage,
+            LLVMLinkage::LLVMGhostLinkage => Self::GhostLinkage,
+            LLVMLinkage::LLVMCommonLinkage => Self::CommonLinkage,
+            LLVMLinkage::LLVMLinkerPrivateLinkage => Self::LinkerPrivateLinkage,
+            LLVMLinkage::LLVMLinkerPrivateWeakLinkage => Self::LinkerPrivateWeakLinkage,
+        }
+    }
+}
+
+impl From<Linkage> for LLVMLinkage {
+    fn from(linkage: Linkage) -> Self {
+        match linkage {
+            Linkage::ExternalLinkage => Self::LLVMExternalLinkage,
+            Linkage::AvailableExternallyLinkage => Self::LLVMAvailableExternallyLinkage,
+            Linkage::LinkOnceAnyLinkage => Self::LLVMLinkOnceAnyLinkage,
+            Linkage::LinkOnceODRLinkage => Self::LLVMLinkOnceODRLinkage,
+            Linkage::LinkOnceODRAutoHideLinkage => Self::LLVMLinkOnceODRAutoHideLinkage,
+            Linkage::WeakAnyLinkage => Self::LLVMWeakAnyLinkage,
+            Linkage::WeakODRLinkage => Self::LLVMWeakODRLinkage,
+            Linkage::AppendingLinkage => Self::LLVMAppendingLinkage,
+            Linkage::InternalLinkage => Self::LLVMInternalLinkage,
+            Linkage::PrivateLinkage => Self::LLVMPrivateLinkage,
+            Linkage::DLLImportLinkage => Self::LLVMDLLImportLinkage,
+            Linkage::DLLExportLinkage => Self::LLVMDLLExportLinkage,
+            Linkage::ExternalWeakLinkage => Self::LLVMExternalWeakLinkage,
+            Linkage::GhostLinkage => Self::LLVMGhostLinkage,
+            Linkage::CommonLinkage => Self::LLVMCommonLinkage,
+            Linkage::LinkerPrivateLinkage => Self::LLVMLinkerPrivateLinkage,
+            Linkage::LinkerPrivateWeakLinkage => Self::LLVMLinkerPrivateWeakLinkage,
+        }
+    }
+}
+
+/// `Visibility` is an enumeration in LLVM that represents the
+/// visibility of global values such as functions and global
+/// variables. Visibility determines how symbols are treated by
+/// the linker and whether they can be seen by other modules or
+/// shared libraries.
+/// Generally `Visibility` represent access to the symbol after `Linkage`.
+/// Useful to compose `Linkage` and `Visibility` to define the symbol behavior.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Visibility {
+    /// Default visibility. The symbol is visible to other modules.
+    DefaultVisibility,
+    /// Hidden visibility. The symbol is not visible to other modules or shared libraries.
+    HiddenVisibility,
+    /// Protected visibility. The symbol is visible to other modules but cannot be overridden.
+    ProtectedVisibility,
+}
+
+impl From<LLVMVisibility> for Visibility {
+    fn from(visibility: LLVMVisibility) -> Self {
+        match visibility {
+            LLVMVisibility::LLVMDefaultVisibility => Self::DefaultVisibility,
+            LLVMVisibility::LLVMHiddenVisibility => Self::HiddenVisibility,
+            LLVMVisibility::LLVMProtectedVisibility => Self::ProtectedVisibility,
+        }
+    }
+}
+
+impl From<Visibility> for LLVMVisibility {
+    fn from(visibility: Visibility) -> Self {
+        match visibility {
+            Visibility::DefaultVisibility => Self::LLVMDefaultVisibility,
+            Visibility::HiddenVisibility => Self::LLVMHiddenVisibility,
+            Visibility::ProtectedVisibility => Self::LLVMProtectedVisibility,
         }
     }
 }
