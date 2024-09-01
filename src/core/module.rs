@@ -92,12 +92,19 @@ impl NamedMetadataNodeRef {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MetadataRef(LLVMMetadataRef);
 
 impl From<LLVMMetadataRef> for MetadataRef {
     fn from(metadata: LLVMMetadataRef) -> Self {
         Self(metadata)
+    }
+}
+
+impl GetRef for MetadataRef {
+    type RawRef = LLVMMetadataRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
     }
 }
 

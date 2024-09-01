@@ -1,6 +1,7 @@
 use crate::CUint;
 use llvm_sys::{
-    core, LLVMIntPredicate, LLVMLinkage, LLVMOpcode, LLVMRealPredicate, LLVMVisibility,
+    core, LLVMDLLStorageClass, LLVMIntPredicate, LLVMLinkage, LLVMOpcode, LLVMRealPredicate,
+    LLVMUnnamedAddr, LLVMVisibility,
 };
 use std::fmt::Display;
 use std::ops::Deref;
@@ -570,7 +571,7 @@ impl From<RealPredicate> for LLVMRealPredicate {
 
 /// Represents the linkage types in LLVM for global values.
 /// Linkage types determine the visibility and behavior of symbols across different modules and within the same module.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Linkage {
     /// Externally visible function or variable. Can be linked from another module.
     ExternalLinkage,
@@ -663,7 +664,7 @@ impl From<Linkage> for LLVMLinkage {
 /// shared libraries.
 /// Generally `Visibility` represent access to the symbol after `Linkage`.
 /// Useful to compose `Linkage` and `Visibility` to define the symbol behavior.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
     /// Default visibility. The symbol is visible to other modules.
     DefaultVisibility,
@@ -689,6 +690,87 @@ impl From<Visibility> for LLVMVisibility {
             Visibility::DefaultVisibility => Self::LLVMDefaultVisibility,
             Visibility::HiddenVisibility => Self::LLVMHiddenVisibility,
             Visibility::ProtectedVisibility => Self::LLVMProtectedVisibility,
+        }
+    }
+}
+
+/// Represents the DLL storage classes in LLVM, that specifies how a global value,
+/// such as a function or global variable, should be treated with respect to
+/// dynamic link libraries (DLLs) on platforms like Windows. The `DLLStorageClass`
+/// controls whether a symbol should be imported from a DLL, exported to a DLL, or
+/// treated as a normal global symbol.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DLLStorageClass {
+    /// `DefaultStorageClass`: The default storage class. The symbol is not specifically marked for import or export
+    /// from a DLL. It is treated as a normal global symbol.
+    DefaultStorageClass,
+    /// `DLLImportStorageClass`: Specifies that the symbol should be imported from a DLL. This is used when you want
+    /// to use a function or variable that is defined in another DLL. The linker will ensure that the symbol is correctly
+    /// imported at runtime.
+    DLLImportStorageClass,
+    /// `DLLExportStorageClass`: Specifies that the symbol should be exported to a DLL. This is used when you want to make
+    /// a function or variable available for use by other modules or executables. The linker will ensure that the symbol is
+    /// correctly exported and accessible to other programs.
+    DLLExportStorageClass,
+}
+
+impl From<DLLStorageClass> for LLVMDLLStorageClass {
+    fn from(storage_class: DLLStorageClass) -> Self {
+        match storage_class {
+            DLLStorageClass::DefaultStorageClass => Self::LLVMDefaultStorageClass,
+            DLLStorageClass::DLLImportStorageClass => Self::LLVMDLLImportStorageClass,
+            DLLStorageClass::DLLExportStorageClass => Self::LLVMDLLExportStorageClass,
+        }
+    }
+}
+
+impl From<LLVMDLLStorageClass> for DLLStorageClass {
+    fn from(storage_class: LLVMDLLStorageClass) -> Self {
+        match storage_class {
+            LLVMDLLStorageClass::LLVMDefaultStorageClass => Self::DefaultStorageClass,
+            LLVMDLLStorageClass::LLVMDLLImportStorageClass => Self::DLLImportStorageClass,
+            LLVMDLLStorageClass::LLVMDLLExportStorageClass => Self::DLLExportStorageClass,
+        }
+    }
+}
+
+/// Represents the unnamed address attribute for global values in LLVM.
+///
+/// `UnnamedAddr` is an enumeration that specifies whether a global variable or function's address is significant.
+/// This can help LLVM's optimizer determine whether it can merge or duplicate global values with identical content,
+/// potentially reducing code size or improving performance.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnnamedAddr {
+    /// `NoUnnamedAddr`: The address of the global value is significant, and it must be unique.
+    /// The global variable or function cannot be merged with others, even if they have the same content.
+    /// This is the default behavior for most global values.
+    NoUnnamedAddr,
+    /// `LocalUnnamedAddr`: The address of the global value is not significant within the module, allowing the optimizer
+    /// to merge or duplicate global values with the same content. However, the address is still unique within the module.
+    /// This is useful for variables or functions that are only accessed within the same module and do not need a unique address.
+    LocalUnnamedAddr,
+    /// `GlobalUnnamedAddr`: The address of the global value is not significant across the entire program, allowing the optimizer
+    /// to freely merge or duplicate global values with identical content across different modules.
+    /// This can lead to more aggressive optimizations and is useful for constants or functions that do not rely on having a unique address.
+    GlobalUnnamedAddr,
+}
+
+impl From<UnnamedAddr> for LLVMUnnamedAddr {
+    fn from(unnamed_addr: UnnamedAddr) -> Self {
+        match unnamed_addr {
+            UnnamedAddr::NoUnnamedAddr => Self::LLVMNoUnnamedAddr,
+            UnnamedAddr::LocalUnnamedAddr => Self::LLVMLocalUnnamedAddr,
+            UnnamedAddr::GlobalUnnamedAddr => Self::LLVMGlobalUnnamedAddr,
+        }
+    }
+}
+
+impl From<LLVMUnnamedAddr> for UnnamedAddr {
+    fn from(unnamed_addr: LLVMUnnamedAddr) -> Self {
+        match unnamed_addr {
+            LLVMUnnamedAddr::LLVMNoUnnamedAddr => Self::NoUnnamedAddr,
+            LLVMUnnamedAddr::LLVMLocalUnnamedAddr => Self::LocalUnnamedAddr,
+            LLVMUnnamedAddr::LLVMGlobalUnnamedAddr => Self::GlobalUnnamedAddr,
         }
     }
 }
