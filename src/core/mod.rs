@@ -1,5 +1,8 @@
 use crate::CUint;
-use llvm_sys::{core, LLVMIntPredicate, LLVMOpcode, LLVMRealPredicate};
+use llvm_sys::{
+    core, LLVMDLLStorageClass, LLVMIntPredicate, LLVMLinkage, LLVMOpcode, LLVMRealPredicate,
+    LLVMUnnamedAddr, LLVMVisibility,
+};
 use std::fmt::Display;
 use std::ops::Deref;
 
@@ -42,10 +45,16 @@ impl AddressSpace {
 }
 
 /// Dispose LLVM message
-/// ## Safety
-/// Common function to dispose allocated message
-pub unsafe fn dispose_message(message: *mut libc::c_char) {
-    unsafe { core::LLVMDisposeMessage(message) }
+///
+/// ## Panics
+/// This function is purely informative and panics with a message about the call
+/// being unavailable. Since there are no cases in which it can be called in
+/// safe code. For raw access, if there is such a need, must be called
+/// `LLVMDisposeMessage` directly.
+pub fn dispose_message(_message: libc::c_char) {
+    unreachable!(
+        "LLVMDisposeMessage is unsafe adn restricted to operated to operate directly for safe code"
+    );
 }
 
 /// LLVM version representation
@@ -556,6 +565,212 @@ impl From<RealPredicate> for LLVMRealPredicate {
             RealPredicate::RealULE => Self::LLVMRealULE,
             RealPredicate::RealUNE => Self::LLVMRealUNE,
             RealPredicate::RealPredicateTrue => Self::LLVMRealPredicateTrue,
+        }
+    }
+}
+
+/// Represents the linkage types in LLVM for global values.
+/// Linkage types determine the visibility and behavior of symbols across different modules and within the same module.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Linkage {
+    /// Externally visible function or variable. Can be linked from another module.
+    ExternalLinkage,
+    /// Similar to `ExternalLinkage`, but the symbol may be discarded if not used.
+    AvailableExternallyLinkage,
+    /// Keeps one copy of the function or variable when linking, discarding others.
+    LinkOnceAnyLinkage,
+    /// Similar to `LinkOnceAnyLinkage`, but the symbol cannot be discarded.
+    LinkOnceODRLinkage,
+    /// Same as `LinkOnceODRLinkage`, but with hidden visibility.
+    LinkOnceODRAutoHideLinkage,
+    /// Keeps one copy, discarding others, but prefer the local copy.
+    WeakAnyLinkage,
+    /// Similar to `WeakAnyLinkage`, but ensures that the symbol is unique and is emitted only once.
+    WeakODRLinkage,
+    /// Appending linkage: when linked, multiple definitions of the same variable are concatenated.
+    AppendingLinkage,
+    /// Local to the translation unit, not visible outside of it.
+    InternalLinkage,
+    /// Similar to `InternalLinkage`, but prevents inlining and other optimizations.
+    PrivateLinkage,
+    /// Indicates that the global value should be imported from a DLL.
+    DLLImportLinkage,
+    /// Indicates that the global value should be exported to a DLL.
+    DLLExportLinkage,
+    /// The global variable or function is merged into the program only if it is used.
+    ExternalWeakLinkage,
+    /// A special linkage type used internally by the linker.
+    GhostLinkage,
+    /// Common linkage for uninitialized global variables.
+    CommonLinkage,
+    /// Linker private linkage, used to indicate a symbol that is internal to the module.
+    LinkerPrivateLinkage,
+    /// Weak version of `LinkerPrivateLinkage`.
+    LinkerPrivateWeakLinkage,
+}
+
+impl From<LLVMLinkage> for Linkage {
+    fn from(linkage: LLVMLinkage) -> Self {
+        match linkage {
+            LLVMLinkage::LLVMExternalLinkage => Self::ExternalLinkage,
+            LLVMLinkage::LLVMAvailableExternallyLinkage => Self::AvailableExternallyLinkage,
+            LLVMLinkage::LLVMLinkOnceAnyLinkage => Self::LinkOnceAnyLinkage,
+            LLVMLinkage::LLVMLinkOnceODRLinkage => Self::LinkOnceODRLinkage,
+            LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage => Self::LinkOnceODRAutoHideLinkage,
+            LLVMLinkage::LLVMWeakAnyLinkage => Self::WeakAnyLinkage,
+            LLVMLinkage::LLVMWeakODRLinkage => Self::WeakODRLinkage,
+            LLVMLinkage::LLVMAppendingLinkage => Self::AppendingLinkage,
+            LLVMLinkage::LLVMInternalLinkage => Self::InternalLinkage,
+            LLVMLinkage::LLVMPrivateLinkage => Self::PrivateLinkage,
+            LLVMLinkage::LLVMDLLImportLinkage => Self::DLLImportLinkage,
+            LLVMLinkage::LLVMDLLExportLinkage => Self::DLLExportLinkage,
+            LLVMLinkage::LLVMExternalWeakLinkage => Self::ExternalWeakLinkage,
+            LLVMLinkage::LLVMGhostLinkage => Self::GhostLinkage,
+            LLVMLinkage::LLVMCommonLinkage => Self::CommonLinkage,
+            LLVMLinkage::LLVMLinkerPrivateLinkage => Self::LinkerPrivateLinkage,
+            LLVMLinkage::LLVMLinkerPrivateWeakLinkage => Self::LinkerPrivateWeakLinkage,
+        }
+    }
+}
+
+impl From<Linkage> for LLVMLinkage {
+    fn from(linkage: Linkage) -> Self {
+        match linkage {
+            Linkage::ExternalLinkage => Self::LLVMExternalLinkage,
+            Linkage::AvailableExternallyLinkage => Self::LLVMAvailableExternallyLinkage,
+            Linkage::LinkOnceAnyLinkage => Self::LLVMLinkOnceAnyLinkage,
+            Linkage::LinkOnceODRLinkage => Self::LLVMLinkOnceODRLinkage,
+            Linkage::LinkOnceODRAutoHideLinkage => Self::LLVMLinkOnceODRAutoHideLinkage,
+            Linkage::WeakAnyLinkage => Self::LLVMWeakAnyLinkage,
+            Linkage::WeakODRLinkage => Self::LLVMWeakODRLinkage,
+            Linkage::AppendingLinkage => Self::LLVMAppendingLinkage,
+            Linkage::InternalLinkage => Self::LLVMInternalLinkage,
+            Linkage::PrivateLinkage => Self::LLVMPrivateLinkage,
+            Linkage::DLLImportLinkage => Self::LLVMDLLImportLinkage,
+            Linkage::DLLExportLinkage => Self::LLVMDLLExportLinkage,
+            Linkage::ExternalWeakLinkage => Self::LLVMExternalWeakLinkage,
+            Linkage::GhostLinkage => Self::LLVMGhostLinkage,
+            Linkage::CommonLinkage => Self::LLVMCommonLinkage,
+            Linkage::LinkerPrivateLinkage => Self::LLVMLinkerPrivateLinkage,
+            Linkage::LinkerPrivateWeakLinkage => Self::LLVMLinkerPrivateWeakLinkage,
+        }
+    }
+}
+
+/// `Visibility` is an enumeration in LLVM that represents the
+/// visibility of global values such as functions and global
+/// variables. Visibility determines how symbols are treated by
+/// the linker and whether they can be seen by other modules or
+/// shared libraries.
+/// Generally `Visibility` represent access to the symbol after `Linkage`.
+/// Useful to compose `Linkage` and `Visibility` to define the symbol behavior.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    /// Default visibility. The symbol is visible to other modules.
+    DefaultVisibility,
+    /// Hidden visibility. The symbol is not visible to other modules or shared libraries.
+    HiddenVisibility,
+    /// Protected visibility. The symbol is visible to other modules but cannot be overridden.
+    ProtectedVisibility,
+}
+
+impl From<LLVMVisibility> for Visibility {
+    fn from(visibility: LLVMVisibility) -> Self {
+        match visibility {
+            LLVMVisibility::LLVMDefaultVisibility => Self::DefaultVisibility,
+            LLVMVisibility::LLVMHiddenVisibility => Self::HiddenVisibility,
+            LLVMVisibility::LLVMProtectedVisibility => Self::ProtectedVisibility,
+        }
+    }
+}
+
+impl From<Visibility> for LLVMVisibility {
+    fn from(visibility: Visibility) -> Self {
+        match visibility {
+            Visibility::DefaultVisibility => Self::LLVMDefaultVisibility,
+            Visibility::HiddenVisibility => Self::LLVMHiddenVisibility,
+            Visibility::ProtectedVisibility => Self::LLVMProtectedVisibility,
+        }
+    }
+}
+
+/// Represents the DLL storage classes in LLVM, that specifies how a global value,
+/// such as a function or global variable, should be treated with respect to
+/// dynamic link libraries (DLLs) on platforms like Windows. The `DLLStorageClass`
+/// controls whether a symbol should be imported from a DLL, exported to a DLL, or
+/// treated as a normal global symbol.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DLLStorageClass {
+    /// `DefaultStorageClass`: The default storage class. The symbol is not specifically marked for import or export
+    /// from a DLL. It is treated as a normal global symbol.
+    DefaultStorageClass,
+    /// `DLLImportStorageClass`: Specifies that the symbol should be imported from a DLL. This is used when you want
+    /// to use a function or variable that is defined in another DLL. The linker will ensure that the symbol is correctly
+    /// imported at runtime.
+    DLLImportStorageClass,
+    /// `DLLExportStorageClass`: Specifies that the symbol should be exported to a DLL. This is used when you want to make
+    /// a function or variable available for use by other modules or executables. The linker will ensure that the symbol is
+    /// correctly exported and accessible to other programs.
+    DLLExportStorageClass,
+}
+
+impl From<DLLStorageClass> for LLVMDLLStorageClass {
+    fn from(storage_class: DLLStorageClass) -> Self {
+        match storage_class {
+            DLLStorageClass::DefaultStorageClass => Self::LLVMDefaultStorageClass,
+            DLLStorageClass::DLLImportStorageClass => Self::LLVMDLLImportStorageClass,
+            DLLStorageClass::DLLExportStorageClass => Self::LLVMDLLExportStorageClass,
+        }
+    }
+}
+
+impl From<LLVMDLLStorageClass> for DLLStorageClass {
+    fn from(storage_class: LLVMDLLStorageClass) -> Self {
+        match storage_class {
+            LLVMDLLStorageClass::LLVMDefaultStorageClass => Self::DefaultStorageClass,
+            LLVMDLLStorageClass::LLVMDLLImportStorageClass => Self::DLLImportStorageClass,
+            LLVMDLLStorageClass::LLVMDLLExportStorageClass => Self::DLLExportStorageClass,
+        }
+    }
+}
+
+/// Represents the unnamed address attribute for global values in LLVM.
+///
+/// `UnnamedAddr` is an enumeration that specifies whether a global variable or function's address is significant.
+/// This can help LLVM's optimizer determine whether it can merge or duplicate global values with identical content,
+/// potentially reducing code size or improving performance.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnnamedAddr {
+    /// `NoUnnamedAddr`: The address of the global value is significant, and it must be unique.
+    /// The global variable or function cannot be merged with others, even if they have the same content.
+    /// This is the default behavior for most global values.
+    NoUnnamedAddr,
+    /// `LocalUnnamedAddr`: The address of the global value is not significant within the module, allowing the optimizer
+    /// to merge or duplicate global values with the same content. However, the address is still unique within the module.
+    /// This is useful for variables or functions that are only accessed within the same module and do not need a unique address.
+    LocalUnnamedAddr,
+    /// `GlobalUnnamedAddr`: The address of the global value is not significant across the entire program, allowing the optimizer
+    /// to freely merge or duplicate global values with identical content across different modules.
+    /// This can lead to more aggressive optimizations and is useful for constants or functions that do not rely on having a unique address.
+    GlobalUnnamedAddr,
+}
+
+impl From<UnnamedAddr> for LLVMUnnamedAddr {
+    fn from(unnamed_addr: UnnamedAddr) -> Self {
+        match unnamed_addr {
+            UnnamedAddr::NoUnnamedAddr => Self::LLVMNoUnnamedAddr,
+            UnnamedAddr::LocalUnnamedAddr => Self::LLVMLocalUnnamedAddr,
+            UnnamedAddr::GlobalUnnamedAddr => Self::LLVMGlobalUnnamedAddr,
+        }
+    }
+}
+
+impl From<LLVMUnnamedAddr> for UnnamedAddr {
+    fn from(unnamed_addr: LLVMUnnamedAddr) -> Self {
+        match unnamed_addr {
+            LLVMUnnamedAddr::LLVMNoUnnamedAddr => Self::NoUnnamedAddr,
+            LLVMUnnamedAddr::LLVMLocalUnnamedAddr => Self::LocalUnnamedAddr,
+            LLVMUnnamedAddr::LLVMGlobalUnnamedAddr => Self::GlobalUnnamedAddr,
         }
     }
 }

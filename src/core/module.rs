@@ -92,8 +92,21 @@ impl NamedMetadataNodeRef {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MetadataRef(LLVMMetadataRef);
+
+impl From<LLVMMetadataRef> for MetadataRef {
+    fn from(metadata: LLVMMetadataRef) -> Self {
+        Self(metadata)
+    }
+}
+
+impl GetRef for MetadataRef {
+    type RawRef = LLVMMetadataRef;
+    fn get_ref(&self) -> Self::RawRef {
+        self.0
+    }
+}
 
 /// Represents flags that describe information about the module for use by
 /// an external entity e.g. the dynamic linker.
@@ -218,6 +231,12 @@ impl Drop for ModuleRef {
         unsafe {
             core::LLVMDisposeModule(self.0);
         }
+    }
+}
+
+impl From<LLVMModuleRef> for ModuleRef {
+    fn from(module: LLVMModuleRef) -> Self {
+        Self(module)
     }
 }
 
@@ -418,7 +437,7 @@ impl ModuleRef {
         } else {
             unsafe {
                 let error = CStr::new(error_message).to_string();
-                crate::core::dispose_message(error_message);
+                core::LLVMDisposeMessage(error_message);
                 Err(error)
             }
         }
@@ -433,7 +452,7 @@ impl ModuleRef {
                 return None;
             }
             let result = CStr::new(c_str).to_string();
-            crate::core::dispose_message(c_str);
+            core::LLVMDisposeMessage(c_str);
             Some(result)
         }
     }

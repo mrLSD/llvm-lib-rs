@@ -141,7 +141,7 @@ impl ValueRef {
                 return None;
             }
             let result = CStr::new(c_str).to_string();
-            crate::core::dispose_message(c_str);
+            core::LLVMDisposeMessage(c_str);
             Some(result)
         }
     }

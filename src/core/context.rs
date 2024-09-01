@@ -766,14 +766,13 @@ impl GetRef for DiagnosticInfoRef {
 }
 
 impl DiagnosticInfoRef {
-    /// Return a string representation of the `DiagnosticInfo`. Use
-    /// [`crate::core::dispose_message`] (`LLVMDisposeMessage`) to free the string.
+    /// Return a string representation of the `DiagnosticInfo`.
     ///
     /// # Details
     ///
     /// This function wraps the `LLVMGetDiagInfoDescription` function from the LLVM core library. It retrieves a description
     /// of the diagnostic information represented by `self` as a `String`. The description provides a human-readable explanation
-    /// of the diagnostic. After obtaining the string, the memory must be freed using [`crate::core::dispose_message`].
+    /// of the diagnostic. After obtaining the string, the memory is freed using `LLVMDisposeMessage`.
     ///
     /// # Returns
     ///
@@ -783,7 +782,7 @@ impl DiagnosticInfoRef {
     ///
     /// # Safety
     ///
-    /// This function allocates memory for the string, which must be freed using [`crate::core::dispose_message`].
+    /// This function allocates memory for the string, which is freed using `LLVMDisposeMessage`.
     #[must_use]
     pub fn get_description(&self) -> Option<String> {
         unsafe {
@@ -793,7 +792,7 @@ impl DiagnosticInfoRef {
             }
             let value = CStr::new(c_str).to_string();
             // Dispose message
-            crate::core::dispose_message(c_str);
+            core::LLVMDisposeMessage(c_str);
             Some(value)
         }
     }

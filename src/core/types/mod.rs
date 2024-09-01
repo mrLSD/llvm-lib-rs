@@ -226,7 +226,7 @@ impl TypeRef {
                 return String::new();
             }
             let rust_string = CStr::new(c_str).to_string();
-            super::dispose_message(c_str);
+            core::LLVMDisposeMessage(c_str);
             rust_string
         }
     }
