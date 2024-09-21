@@ -4,6 +4,7 @@
 pub mod composite;
 pub mod expressions;
 pub mod global_values;
+pub mod global_variables;
 pub mod scalar;
 
 use super::ValueRef;

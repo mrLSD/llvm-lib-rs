@@ -155,7 +155,7 @@ impl<'a> CStr<'a> {
     /// ## Safety
     /// NOTE: Safety considerations same as for `std::ffi::CStr::from_ptr`.
     #[must_use]
-    pub unsafe fn new(value: *const c_char) -> Self {
+    pub const unsafe fn new(value: *const c_char) -> Self {
         unsafe { Self(std::ffi::CStr::from_ptr(value)) }
     }
 }
