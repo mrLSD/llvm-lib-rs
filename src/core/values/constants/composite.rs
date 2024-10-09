@@ -3,7 +3,7 @@
 use super::ValueRef;
 use crate::core::context::ContextRef;
 use crate::core::types::TypeRef;
-use crate::{CInt, CStr, CString, CUint, GetRef};
+use crate::{CInt, CStr, CString, CUint, GetRef, SizeT};
 use llvm_sys::core;
 
 impl ValueRef {
@@ -13,7 +13,7 @@ impl ValueRef {
     ///
     /// Creates a constant string value in a specified LLVM context.
     ///
-    /// This function wraps the `LLVMConstStringInContext` function from the LLVM core library. It generates a constant
+    /// This function wraps the `LLVMConstStringInContext2` function from the LLVM core library. It generates a constant
     /// string value within the specified LLVM context (`context`) using the provided string slice (`string`). The function
     /// also allows you to specify whether the string should be null-terminated.
     ///
@@ -27,17 +27,17 @@ impl ValueRef {
     ///
     /// Returns an instance of `ValueRef`, which encapsulates the constant string value created in the specified context.
     #[must_use]
-    pub fn const_string_in_context(
+    pub fn const_string_in_context2(
         context: &ContextRef,
         string: &str,
         dont_null_terminate: bool,
     ) -> Self {
         let c_string = CString::from(string);
         unsafe {
-            Self(core::LLVMConstStringInContext(
+            Self(core::LLVMConstStringInContext2(
                 context.get_ref(),
                 c_string.as_ptr(),
-                *CUint::from(string.len()),
+                *SizeT::from(string.len()),
                 *CInt::from(dont_null_terminate),
             ))
         }

@@ -73,6 +73,8 @@ pub enum ValueKind {
     Poison,
     /// Represents a target-specific constant value that has no direct representation in the source code.
     ConstantTargetNone,
+    /// Represents a constant pointer with pointer authentication. This is a pointer with additional authentication information.
+    ConstantPtrAuthValueKind,
 }
 
 impl From<LLVMValueKind> for ValueKind {
@@ -105,6 +107,7 @@ impl From<LLVMValueKind> for ValueKind {
             LLVMValueKind::LLVMInstructionValueKind => Self::Instruction,
             LLVMValueKind::LLVMPoisonValueKind => Self::Poison,
             LLVMValueKind::LLVMConstantTargetNoneValueKind => Self::ConstantTargetNone,
+            LLVMValueKind::LLVMConstantPtrAuthValueKind => Self::ConstantPtrAuthValueKind,
         }
     }
 }

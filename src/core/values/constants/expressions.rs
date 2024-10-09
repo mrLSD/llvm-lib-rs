@@ -26,7 +26,7 @@
 use super::ValueRef;
 use crate::basic_block::BasicBlockRef;
 use crate::core::types::TypeRef;
-use crate::core::{IntPredicate, Opcode, RealPredicate};
+use crate::core::Opcode;
 use crate::{CUint, GetRef};
 use llvm_sys::core;
 
@@ -133,26 +133,6 @@ impl ValueRef {
     #[must_use]
     pub fn const_nsw_neg(&self) -> Self {
         unsafe { Self(core::LLVMConstNSWNeg(self.0)) }
-    }
-
-    /// Create a `NUW` negation operation on a constant value.
-    ///
-    /// # Details
-    ///
-    /// Creates a new constant integer value representing the arithmetic negation
-    /// of the original value, with the `nuw` (No Unsigned Wrap) flag set.
-    ///
-    /// The `nuw` flag indicates that unsigned overflow is not allowed, and if it occurs,
-    /// the program's behavior will be undefined. This allows LLVM to optimize the code
-    /// under the assumption that overflow does not happen during the negation operation.
-    ///
-    /// # Returns
-    ///
-    /// Returns a new constant integer value representing the result of the negation
-    /// operation (`-self`) with the `nuw` flag set.
-    #[must_use]
-    pub fn const_nuw_neg(&self) -> Self {
-        unsafe { Self(core::LLVMConstNUWNeg(self.0)) }
     }
 
     /// Create a logical NOT operation on a constant value.
@@ -414,88 +394,6 @@ impl ValueRef {
     #[must_use]
     pub fn const_xor(lhs: &Self, rhs: &Self) -> Self {
         unsafe { Self(core::LLVMConstXor(lhs.0, rhs.0)) }
-    }
-
-    /// Create an integer comparison operation on two constant values.
-    ///
-    /// # Details
-    ///
-    /// Performs a constant integer comparison between two values using a specified comparison predicate.
-    ///
-    /// This function is a wrapper around the `LLVMConstICmp` function from the LLVM core library.
-    /// It allows you to perform a comparison between two integer values (`lhs` and `rhs`) at compile time,
-    /// returning a new value that represents the result of the comparison. The comparison is specified
-    /// by the `predicate`, which determines the type of comparison to be made (e.g., equality, less than, greater than).
-    ///
-    /// # Parameters
-    ///
-    /// - `predicate`: An instance of [`IntPredicate`] that specifies the kind of comparison to perform.
-    ///   This could be one of several variants like `IntEQ` (equal), `IntNE` (not equal), `IntUGT` (unsigned greater than),
-    ///   and others, depending on the type of integer comparison desired.
-    /// - `lhs`: A reference to the left-hand side value (`lhs`) of the comparison. This is the first integer value to compare.
-    /// - `rhs`: A reference to the right-hand side value (`rhs`) of the comparison. This is the second integer value to compare.
-    ///
-    /// # Returns
-    ///
-    /// Returns an instance of `ValueRef`, which encapsulates the result of the comparison. The result is a constant
-    /// value determined at compile time based on the specified `predicate`.
-    #[must_use]
-    pub fn const_icmp(predicate: IntPredicate, lhs: &Self, rhs: &Self) -> Self {
-        unsafe { Self(core::LLVMConstICmp(predicate.into(), lhs.0, rhs.0)) }
-    }
-
-    /// Create a floating-point comparison operation on two constant values.
-    ///
-    /// # Details
-    ///
-    /// Performs a constant floating-point comparison between two values using a specified comparison predicate.
-    ///
-    /// This function is a wrapper around the `LLVMConstFCmp` function from the LLVM core library.
-    /// It allows you to perform a comparison between two floating-point values (`lhs` and `rhs`) at compile time,
-    /// returning a new value that represents the result of the comparison. The comparison is specified
-    /// by the `predicate`, which determines the type of comparison to be made (e.g., equal to, less than, greater than).
-    ///
-    /// # Parameters
-    ///
-    /// - `predicate`: An instance of [`RealPredicate`] that specifies the kind of comparison to perform.
-    ///   This could be one of several variants like `RealPredicate::RealOEQ` (ordered and equal),
-    ///   `RealPredicate::RealOLT` (ordered and less than), `RealPredicate::RealUGT` (unordered and greater than), etc.
-    ///   The exact variant determines the nature of the floating-point comparison.
-    /// - `lhs`: A reference to the left-hand side value (`lhs`) of the comparison. This is the first floating-point value to compare.
-    /// - `rhs`: A reference to the right-hand side value (`rhs`) of the comparison. This is the second floating-point value to compare.
-    ///
-    /// # Returns
-    ///
-    /// Returns an instance of `ValueRef`, which encapsulates the result of the comparison. The result is a constant
-    /// value determined at compile time based on the specified `predicate`.
-    #[must_use]
-    pub fn const_fcmp(predicate: RealPredicate, lhs: &Self, rhs: &Self) -> Self {
-        unsafe { Self(core::LLVMConstFCmp(predicate.into(), lhs.0, rhs.0)) }
-    }
-
-    /// Create a left shift operation on two constant values.
-    ///
-    /// # Details
-    ///
-    /// Performs a constant bitwise left shift operation between two integer values.
-    ///
-    /// This function is a wrapper around the `LLVMConstShl` function from the LLVM core library.
-    /// It allows you to perform a left shift operation on two integer values (`lhs` and `rhs`) at compile time,
-    /// returning a new value that represents the result of the shift. The left-hand side value (`lhs`) is shifted
-    /// left by the number of bits specified by the right-hand side value (`rhs`).
-    ///
-    /// # Parameters
-    ///
-    /// - `lhs`: A reference to the left-hand side value (`lhs`) of the shift operation. This is the integer value that will be shifted.
-    /// - `rhs`: A reference to the right-hand side value (`rhs`) of the shift operation. This is the integer value that specifies the number of bits to shift.
-    ///
-    /// # Returns
-    ///
-    /// Returns an instance of `ValueRef`, which encapsulates the result of the left shift operation. The result is a constant
-    /// value determined at compile time based on shifting `lhs` to the left by `rhs` bits.
-    #[must_use]
-    pub fn const_shl(lhs: &Self, rhs: &Self) -> Self {
-        unsafe { Self(core::LLVMConstShl(lhs.0, rhs.0)) }
     }
 
     /// Create a GEP (`GetElementPtr`) operation on a constant value.
