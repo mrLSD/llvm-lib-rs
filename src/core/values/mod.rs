@@ -10,8 +10,6 @@ pub mod constants;
 pub mod general;
 pub mod uses;
 
-pub use constants::ConstValueRef;
-
 /// Represents the different kinds of values in LLVM IR.
 ///
 /// The `ValueKind` enum categorizes the various types of values that can exist within LLVM IR. Each variant
