@@ -59,16 +59,11 @@ impl StructTypeRef {
         element_types: &[TypeRef],
         packed: bool,
     ) -> Self {
-        let mut element_types = element_types.iter().map(|v| v.0).collect::<Vec<_>>();
-        let elements = if element_types.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            element_types.as_mut_ptr()
-        };
+        let elements_ptr = crate::to_mut_ptr!(element_types);
         unsafe {
             Self(core::LLVMStructTypeInContext(
                 context.get_ref(),
-                elements,
+                elements_ptr,
                 *CUint::from(element_types.len()),
                 *CInt::from(packed),
             ))
@@ -96,15 +91,10 @@ impl StructTypeRef {
     /// Returns an instance of `Self` representing the structure type in the global context.
     #[must_use]
     pub fn struct_type(element_types: &[TypeRef], packed: bool) -> Self {
-        let mut element_types = element_types.iter().map(|v| v.0).collect::<Vec<_>>();
-        let elements = if element_types.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            element_types.as_mut_ptr()
-        };
+        let elements_ptr = crate::to_mut_ptr!(element_types);
         unsafe {
             Self(core::LLVMStructType(
-                elements,
+                elements_ptr,
                 *CUint::from(element_types.len()),
                 *CInt::from(packed),
             ))
@@ -185,16 +175,11 @@ impl StructTypeRef {
     /// - `element_types`: A slice of `Self` representing the types of the elements (fields) in the structure. Each element in this slice corresponds to a field in the structure.
     /// - `packed`: A boolean indicating whether the structure should be packed (`true`) or unpacked (`false`). A packed structure has its fields tightly packed without padding.
     pub fn struct_set_body(&self, element_types: &[Self], packed: bool) {
-        let mut element_types = element_types.iter().map(|v| v.0).collect::<Vec<_>>();
-        let elements = if element_types.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            element_types.as_mut_ptr()
-        };
+        let elements_ptr = crate::to_mut_ptr!(element_types);
         unsafe {
             core::LLVMStructSetBody(
                 self.0,
-                elements,
+                elements_ptr,
                 *CUint::from(element_types.len()),
                 *CInt::from(packed),
             );

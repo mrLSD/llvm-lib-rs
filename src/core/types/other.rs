@@ -422,21 +422,8 @@ impl TargetExtTypeRef {
         type_params: &[TypeRef],
         int_params: &[u32],
     ) -> Self {
-        let type_params_ptr = if type_params.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            let mut type_params = type_params.iter().map(|v| v.0).collect::<Vec<_>>();
-            type_params.as_mut_ptr()
-        };
-        let int_params_ptr = if int_params.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            let mut int_params = int_params
-                .iter()
-                .map(|v| *CUint::from(*v))
-                .collect::<Vec<_>>();
-            int_params.as_mut_ptr()
-        };
+        let type_params_ptr = crate::to_mut_ptr!(type_params);
+        let int_params_ptr = crate::map_mut_ptr!(int_params, |v| *CUint::from(*v));
 
         let c_name = CString::from(name);
         unsafe {

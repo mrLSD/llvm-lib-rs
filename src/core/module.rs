@@ -307,7 +307,7 @@ impl ModuleRef {
             core::LLVMSetModuleIdentifier(
                 self.0,
                 c_ident.as_ptr(),
-                *SizeT::from(c_ident.to_bytes().len()),
+                *SizeT::from(c_ident.count_bytes()),
             );
         }
     }
@@ -332,7 +332,7 @@ impl ModuleRef {
             core::LLVMSetSourceFileName(
                 self.0,
                 c_name.as_ptr(),
-                *SizeT::from(c_name.to_bytes().len()),
+                *SizeT::from(c_name.count_bytes()),
             );
         }
     }
@@ -396,9 +396,8 @@ impl ModuleRef {
     #[must_use]
     pub fn get_module_flag(&self, key: &str) -> MetadataRef {
         let c_key = CString::from(key);
-        let metadata = unsafe {
-            core::LLVMGetModuleFlag(self.0, c_key.as_ptr(), *SizeT(c_key.to_bytes().len()))
-        };
+        let metadata =
+            unsafe { core::LLVMGetModuleFlag(self.0, c_key.as_ptr(), *SizeT(c_key.count_bytes())) };
         MetadataRef(metadata)
     }
 
@@ -409,7 +408,7 @@ impl ModuleRef {
                 self.0,
                 (*behavior).into(),
                 c_key.as_ptr(),
-                c_key.to_bytes().len(),
+                c_key.count_bytes(),
                 val.0,
             );
         }
@@ -474,7 +473,7 @@ impl ModuleRef {
     pub fn set_module_inline_asm(&self, asm: &str) {
         let c_asm = CString::from(asm);
         unsafe {
-            core::LLVMSetModuleInlineAsm2(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+            core::LLVMSetModuleInlineAsm2(self.0, c_asm.as_ptr(), *SizeT(c_asm.count_bytes()));
         }
     }
 
@@ -482,7 +481,7 @@ impl ModuleRef {
     pub fn append_module_inline_asm(&self, asm: &str) {
         let c_asm = CString::from(asm);
         unsafe {
-            core::LLVMAppendModuleInlineAsm(self.0, c_asm.as_ptr(), *SizeT(c_asm.to_bytes().len()));
+            core::LLVMAppendModuleInlineAsm(self.0, c_asm.as_ptr(), *SizeT(c_asm.count_bytes()));
         }
     }
 
@@ -627,9 +626,9 @@ pub fn get_inline_asm(
         core::LLVMGetInlineAsm(
             ty.get_ref(),
             c_asm_string.as_ptr(),
-            *SizeT(c_asm_string.to_bytes().len()),
+            *SizeT(c_asm_string.count_bytes()),
             c_constraints.as_ptr(),
-            *SizeT(c_constraints.to_bytes().len()),
+            *SizeT(c_constraints.count_bytes()),
             *CInt::from(has_side_effects),
             *CInt::from(is_align_stack),
             dialect.into(),

@@ -54,12 +54,7 @@ impl FunctionTypeRef {
     /// Returns an instance of `Self` representing the function type with the specified return type, parameters, and varargs setting.
     #[must_use]
     pub fn function_type(return_type: &TypeRef, param_types: &[TypeRef], is_var_arg: bool) -> Self {
-        let mut param_types = param_types.iter().map(|v| v.0).collect::<Vec<_>>();
-        let parameters = if param_types.is_empty() {
-            std::ptr::null_mut()
-        } else {
-            param_types.as_mut_ptr()
-        };
+        let parameters = crate::to_mut_ptr!(param_types);
         unsafe {
             Self(core::LLVMFunctionType(
                 return_type.0,

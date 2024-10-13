@@ -402,7 +402,7 @@ impl MetadataKindId {
             core::LLVMGetMDKindIDInContext(
                 context.get_ref(),
                 c_name.as_ptr(),
-                *CUint::from(c_name.to_bytes().len()),
+                *CUint::from(c_name.count_bytes()),
             )
         };
         Self(id)
@@ -429,9 +429,8 @@ impl MetadataKindId {
     #[must_use]
     pub fn get_md_kind_id(name: &str) -> Self {
         let c_name = CString::from(name);
-        let id = unsafe {
-            core::LLVMGetMDKindID(c_name.as_ptr(), *CUint::from(c_name.to_bytes().len()))
-        };
+        let id =
+            unsafe { core::LLVMGetMDKindID(c_name.as_ptr(), *CUint::from(c_name.count_bytes())) };
         Self(id)
     }
 }
@@ -484,7 +483,7 @@ impl AttributeRef {
     pub fn get_enum_attribute_kind_for_name(name: &str) -> u32 {
         let c_name = CString::from(name);
         unsafe {
-            core::LLVMGetEnumAttributeKindForName(c_name.as_ptr(), *SizeT(c_name.to_bytes().len()))
+            core::LLVMGetEnumAttributeKindForName(c_name.as_ptr(), *SizeT(c_name.count_bytes()))
         }
     }
 
@@ -643,9 +642,9 @@ impl AttributeRef {
             core::LLVMCreateStringAttribute(
                 context.get_ref(),
                 c_key.as_ptr(),
-                *CUint::from(c_key.to_bytes().len()),
+                *CUint::from(c_key.count_bytes()),
                 c_value.as_ptr(),
-                *CUint::from(c_value.to_bytes().len()),
+                *CUint::from(c_value.count_bytes()),
             )
         };
         Self(attr)

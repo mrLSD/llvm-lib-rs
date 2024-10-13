@@ -7,6 +7,7 @@ use llvm_sys::LLVMValueKind;
 use std::ops::Deref;
 
 pub mod constants;
+pub mod function_values;
 pub mod general;
 pub mod uses;
 
