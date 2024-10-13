@@ -422,12 +422,7 @@ pub fn const_gep2(
     constant_val: &ValueRef,
     constant_indices: &[ValueRef],
 ) -> ValueRef {
-    let mut constant_indices = constant_indices.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_indices_ptr = if constant_indices.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_indices.as_mut_ptr()
-    };
+    let constant_indices_ptr = crate::to_mut_ptr!(constant_indices);
     unsafe {
         ValueRef(core::LLVMConstGEP2(
             ty.get_ref(),
@@ -466,12 +461,7 @@ pub fn const_in_bounds_gep2(
     constant_val: &ValueRef,
     constant_indices: &[ValueRef],
 ) -> ValueRef {
-    let mut constant_indices = constant_indices.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_indices_ptr = if constant_indices.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_indices.as_mut_ptr()
-    };
+    let constant_indices_ptr = crate::to_mut_ptr!(constant_indices);
     unsafe {
         ValueRef(core::LLVMConstInBoundsGEP2(
             ty.get_ref(),

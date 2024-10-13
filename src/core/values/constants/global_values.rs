@@ -464,15 +464,7 @@ pub fn value_metadata_entries_get_kind(
     value_metadata_entries: &[ValueMetadataEntry],
     index: u32,
 ) -> u32 {
-    let mut entries = value_metadata_entries
-        .iter()
-        .map(|v| v.0)
-        .collect::<Vec<_>>();
-    let entries_ptr = if entries.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        entries.as_mut_ptr()
-    };
+    let entries_ptr = crate::to_mut_ptr!(value_metadata_entries);
     unsafe { core::LLVMValueMetadataEntriesGetKind(entries_ptr, *CUint::from(index)) }
 }
 
@@ -504,15 +496,7 @@ pub fn value_metadata_entries_get_metadata(
     value_metadata_entries: &[ValueMetadataEntry],
     index: u32,
 ) -> MetadataRef {
-    let mut entries = value_metadata_entries
-        .iter()
-        .map(|v| v.0)
-        .collect::<Vec<_>>();
-    let entries_ptr = if entries.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        entries.as_mut_ptr()
-    };
+    let entries_ptr = crate::to_mut_ptr!(value_metadata_entries);
     unsafe {
         MetadataRef::from(core::LLVMValueMetadataEntriesGetMetadata(
             entries_ptr,

@@ -8,6 +8,9 @@ pub mod basic_block;
 pub mod builder;
 pub mod core;
 
+#[macro_use]
+mod macros;
+
 use libc::{c_char, c_double, c_int, c_uint, size_t};
 use std::ops::{Deref, DerefMut};
 

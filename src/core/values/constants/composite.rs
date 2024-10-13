@@ -148,12 +148,7 @@ pub fn const_struct_in_context(
     constant_vals: &[ValueRef],
     packed: bool,
 ) -> ValueRef {
-    let mut constant_vals = constant_vals.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_vals_ptr = if constant_vals.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_vals.as_mut_ptr()
-    };
+    let constant_vals_ptr = crate::to_mut_ptr!(constant_vals);
     unsafe {
         ValueRef(core::LLVMConstStructInContext(
             context.get_ref(),
@@ -188,12 +183,7 @@ pub fn const_struct_in_context(
 /// Returns an instance of `ValueRef`, which encapsulates the constant struct value created in the global context.
 #[must_use]
 pub fn const_struct(constant_vals: &[ValueRef], packed: bool) -> ValueRef {
-    let mut constant_vals = constant_vals.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_vals_ptr = if constant_vals.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_vals.as_mut_ptr()
-    };
+    let constant_vals_ptr = crate::to_mut_ptr!(constant_vals);
     unsafe {
         ValueRef(core::LLVMConstStruct(
             constant_vals_ptr,
@@ -223,12 +213,7 @@ pub fn const_struct(constant_vals: &[ValueRef], packed: bool) -> ValueRef {
 /// Returns an instance of [`ValueRef`], which encapsulates the constant array value created with the specified element type and elements.
 #[must_use]
 pub fn const_array2(element_type: &TypeRef, constant_vals: &[ValueRef]) -> ValueRef {
-    let mut constant_vals = constant_vals.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_vals_ptr = if constant_vals.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_vals.as_mut_ptr()
-    };
+    let constant_vals_ptr = crate::to_mut_ptr!(constant_vals);
     unsafe {
         ValueRef(core::LLVMConstArray2(
             element_type.get_ref(),
@@ -258,12 +243,7 @@ pub fn const_array2(element_type: &TypeRef, constant_vals: &[ValueRef]) -> Value
 /// Returns an instance of [`ValueRef`], which encapsulates the constant named struct value created with the specified fields.
 #[must_use]
 pub fn const_named_struct(struct_type: &TypeRef, constant_vals: &[ValueRef]) -> ValueRef {
-    let mut constant_vals = constant_vals.iter().map(|v| v.0).collect::<Vec<_>>();
-    let constant_vals_ptr = if constant_vals.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        constant_vals.as_mut_ptr()
-    };
+    let constant_vals_ptr = crate::to_mut_ptr!(constant_vals);
     unsafe {
         ValueRef(core::LLVMConstNamedStruct(
             struct_type.get_ref(),
@@ -324,12 +304,7 @@ pub fn get_aggregate_element(val: &ValueRef, idx: u32) -> Option<ValueRef> {
 /// Returns an instance of [`ValueRef`], which encapsulates the constant vector value created from the specified scalar constants.
 #[must_use]
 pub fn const_vector(scalar_constant_vals: &[ValueRef]) -> ValueRef {
-    let mut scalar_constant_vals = scalar_constant_vals.iter().map(|v| v.0).collect::<Vec<_>>();
-    let scalar_constant_vals_ptr = if scalar_constant_vals.is_empty() {
-        std::ptr::null_mut()
-    } else {
-        scalar_constant_vals.as_mut_ptr()
-    };
+    let scalar_constant_vals_ptr = crate::to_mut_ptr!(scalar_constant_vals);
     unsafe {
         ValueRef(core::LLVMConstVector(
             scalar_constant_vals_ptr,
